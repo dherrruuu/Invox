@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Customers — INVOX{% endblock %}
+{% block page_title %}Customers{% endblock %}
+{% block topbar_actions %}
+  <a href="{{ url_for('customers.new') }}" class="btn btn-primary">+ Add Customer</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">All Customers</span>
+    <form class="search-form" method="GET">
+      <input type="text" name="q" placeholder="Search name, phone…" value="{{ q }}">
+      <button class="btn btn-secondary btn-sm" type="submit">Search</button>
+      {% if q %}<a href="{{ url_for('customers.index') }}" class="btn btn-ghost btn-sm">Clear</a>{% endif %}
+    </form>
+  </div>
+  <table class="tbl">
+    <thead><tr>
+      <th>#</th><th>Name</th><th>Company</th><th>Phone</th><th>Email</th><th>GST</th><th>Actions</th>
+    </tr></thead>
+    <tbody>
+      {% for c in customers %}
+      <tr>
+        <td class="text-muted font-mono">{{ c.customer_id }}</td>
+        <td><strong>{{ c.name }}</strong></td>
+        <td class="text-muted">{{ c.company_name or '—' }}</td>
+        <td>{{ c.phone or '—' }}</td>
+        <td>{{ c.email or '—' }}</td>
+        <td class="font-mono text-muted">{{ c.gst_number or '—' }}</td>
+        <td>
+          <div class="flex gap-2">
+            <a href="{{ url_for('customers.edit', customer_id=c.customer_id) }}" class="btn btn-secondary btn-sm">Edit</a>
+            <form method="POST" action="{{ url_for('customers.delete', customer_id=c.customer_id) }}" onsubmit="return confirm('Delete this customer?')">
+              <button class="btn btn-danger btn-sm" type="submit">Delete</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7" class="text-muted" style="text-align:center;padding:32px;">
+        No customers found. <a href="{{ url_for('customers.new') }}" style="color:var(--primary);">Add one</a>.
+      </td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

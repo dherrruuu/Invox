@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}{{ invoice.invoice_code }} — INVOX{% endblock %}
+{% block page_title %}{{ invoice.invoice_code }}{% endblock %}
+{% block topbar_actions %}
+  <div class="flex gap-2">
+    <a href="{{ url_for('invoices.edit', invoice_id=invoice.id) }}" class="btn btn-secondary">Edit</a>
+    <a href="{{ url_for('invoices.pdf', invoice_id=invoice.id) }}" class="btn btn-primary">⬇ Download PDF</a>
+    <a href="{{ url_for('invoices.index') }}" class="btn btn-ghost">← Back</a>
+  </div>
+{% endblock %}
+
+{% block head %}
+<style>
+  .doc-header { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+  .doc-meta dt { font-size: 11px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); margin-bottom: 3px; }
+  .doc-meta dd { font-size: 14px; margin-bottom: 12px; }
+  .totals-box { background: var(--surface2); border-radius: 6px; padding: 16px 20px; min-width: 260px; }
+  .totals-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 14px; }
+  .totals-row.grand { border-top: 1px solid var(--border); margin-top: 8px; padding-top: 10px; font-size: 16px; font-weight: 700; color: var(--primary); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-body">
+    <div class="doc-header">
+      <dl class="doc-meta">
+        <dt>Customer</dt>
+        <dd>{{ invoice.customer.name if invoice.customer else '—' }}<br>
+          {% if invoice.customer %}<span class="text-muted" style="font-size:12px;">{{ invoice.customer.company_name }}</span>{% endif %}
+        </dd>
+        <dt>Invoice Date</dt>
+        <dd>{{ invoice.invoice_date }}</dd>
+        <dt>Status</dt>
+        <dd><span class="badge badge-{{ invoice.status }}">{{ invoice.status }}</span></dd>
+      </dl>
+      <dl class="doc-meta">
+        <dt>Invoice Code</dt>
+        <dd class="font-mono text-primary">{{ invoice.invoice_code }}</dd>
+        {% if invoice.notes %}
+        <dt>Notes</dt>
+        <dd>{{ invoice.notes }}</dd>
+        {% endif %}
+      </dl>
+    </div>
+
+    <table class="tbl" style="margin-bottom:20px;">
+      <thead><tr>
+        <th>#</th><th>Description</th><th>Size</th><th>Unit</th><th>Qty</th><th>Rate (₹)</th><th>GST %</th><th class="text-right">Amount (₹)</th>
+      </tr></thead>
+      <tbody>
+        {% for i, item in enumerate(invoice.line_items, 1) %}
+        <tr>
+          <td class="text-muted">{{ i }}</td>
+          <td>{{ item.description }}</td>
+          <td class="text-muted">{{ item.size or '—' }}</td>
+          <td>{{ item.unit or '—' }}</td>
+          <td>{{ item.quantity }}</td>
+          <td>{{ "{:,.2f}".format(item.rate) }}</td>
+          <td>{{ item.gst_percentage }}%</td>
+          <td class="text-right">{{ "{:,.2f}".format(item.amount) }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="text-muted" style="text-align:center;padding:16px;">No line items</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div style="display:flex;justify-content:flex-end;">
+      <div class="totals-box">
+        <div class="totals-row"><span class="text-muted">Subtotal</span><span>₹{{ "{:,.2f}".format(invoice.subtotal or 0) }}</span></div>
+        <div class="totals-row"><span class="text-muted">GST</span><span>₹{{ "{:,.2f}".format(invoice.gst_amount or 0) }}</span></div>
+        <div class="totals-row"><span class="text-muted">Discount</span><span>₹{{ "{:,.2f}".format(invoice.discount_amount or 0) }}</span></div>
+        <div class="totals-row grand"><span>Grand Total</span><span>₹{{ "{:,.2f}".format(invoice.grand_total or 0) }}</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

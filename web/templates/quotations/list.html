@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Quotations — INVOX{% endblock %}
+{% block page_title %}Quotations{% endblock %}
+{% block topbar_actions %}
+  <a href="{{ url_for('quotations.new') }}" class="btn btn-primary">+ New Quotation</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">All Quotations</span>
+  </div>
+  <table class="tbl">
+    <thead><tr>
+      <th>Quotation #</th><th>Date</th><th>Customer</th><th>Subtotal</th><th>GST</th><th>Total</th><th>Status</th><th>Actions</th>
+    </tr></thead>
+    <tbody>
+      {% for q in quotations %}
+      <tr>
+        <td><a href="{{ url_for('quotations.view', quotation_id=q.id) }}" style="color:var(--primary);text-decoration:none;" class="font-mono">{{ q.quotation_code }}</a></td>
+        <td class="text-muted">{{ q.quotation_date }}</td>
+        <td>{{ q.customer.name if q.customer else '—' }}</td>
+        <td>₹{{ "{:,.2f}".format(q.subtotal or 0) }}</td>
+        <td>₹{{ "{:,.2f}".format(q.gst_amount or 0) }}</td>
+        <td><strong>₹{{ "{:,.2f}".format(q.grand_total or 0) }}</strong></td>
+        <td><span class="badge badge-{{ q.status }}">{{ q.status }}</span></td>
+        <td>
+          <div class="flex gap-2">
+            <a href="{{ url_for('quotations.view', quotation_id=q.id) }}" class="btn btn-secondary btn-sm">View</a>
+            <a href="{{ url_for('quotations.edit', quotation_id=q.id) }}" class="btn btn-secondary btn-sm">Edit</a>
+            <a href="{{ url_for('quotations.pdf', quotation_id=q.id) }}" class="btn btn-ghost btn-sm">PDF</a>
+            <form method="POST" action="{{ url_for('quotations.delete', quotation_id=q.id) }}" onsubmit="return confirm('Delete this quotation?')">
+              <button class="btn btn-danger btn-sm" type="submit">Del</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="8" class="text-muted" style="text-align:center;padding:32px;">
+        No quotations yet. <a href="{{ url_for('quotations.new') }}" style="color:var(--primary);">Create one</a>.
+      </td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

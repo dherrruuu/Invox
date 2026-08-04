@@ -1,0 +1,28 @@
+modules = ["python-3.12"]
+[nix]
+channel = "stable-25_05"
+packages = ["freetype", "glibcLocales"]
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "INVOX Web"
+
+[[workflows.workflow]]
+name = "INVOX Web"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = ".venv/bin/python web_server.py"
+
+[[ports]]
+localPort = 5000
+externalPort = 80

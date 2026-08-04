@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Products — INVOX{% endblock %}
+{% block page_title %}Products{% endblock %}
+{% block topbar_actions %}
+  <a href="{{ url_for('products.new') }}" class="btn btn-primary">+ Add Product</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">All Products</span>
+    <form class="search-form" method="GET">
+      <input type="text" name="q" placeholder="Search name, category…" value="{{ q }}">
+      <button class="btn btn-secondary btn-sm" type="submit">Search</button>
+      {% if q %}<a href="{{ url_for('products.index') }}" class="btn btn-ghost btn-sm">Clear</a>{% endif %}
+    </form>
+  </div>
+  <table class="tbl">
+    <thead><tr>
+      <th>#</th><th>Name</th><th>Category</th><th>Unit</th><th>Rate (₹)</th><th>GST %</th><th>Actions</th>
+    </tr></thead>
+    <tbody>
+      {% for p in products %}
+      <tr>
+        <td class="text-muted font-mono">{{ p.product_id }}</td>
+        <td><strong>{{ p.name }}</strong></td>
+        <td class="text-muted">{{ p.category or '—' }}</td>
+        <td>{{ p.unit }}</td>
+        <td>₹{{ "{:,.2f}".format(p.rate) }}</td>
+        <td>{{ p.gst_percentage }}%</td>
+        <td>
+          <div class="flex gap-2">
+            <a href="{{ url_for('products.edit', product_id=p.product_id) }}" class="btn btn-secondary btn-sm">Edit</a>
+            <form method="POST" action="{{ url_for('products.delete', product_id=p.product_id) }}" onsubmit="return confirm('Delete this product?')">
+              <button class="btn btn-danger btn-sm" type="submit">Delete</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7" class="text-muted" style="text-align:center;padding:32px;">
+        No products found. <a href="{{ url_for('products.new') }}" style="color:var(--primary);">Add one</a>.
+      </td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — INVOX{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block head %}
+<style>
+  .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 28px; }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+  }
+  .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 8px; }
+  .stat-value { font-size: 28px; font-weight: 700; color: var(--text); }
+  .stat-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .stat-card.accent { border-left: 3px solid var(--primary); }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+  <div class="stat-card accent">
+    <div class="stat-label">Revenue</div>
+    <div class="stat-value" style="font-size:22px;">₹{{ "{:,.0f}".format(total_revenue) }}</div>
+    <div class="stat-sub">Finalized + Paid</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Customers</div>
+    <div class="stat-value">{{ total_customers }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Products</div>
+    <div class="stat-value">{{ total_products }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Invoices</div>
+    <div class="stat-value">{{ total_invoices }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Quotations</div>
+    <div class="stat-value">{{ total_quotations }}</div>
+  </div>
+</div>
+
+<div class="two-col">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Recent Invoices</span>
+      <a href="{{ url_for('invoices.new') }}" class="btn btn-primary btn-sm">+ New</a>
+    </div>
+    <table class="tbl">
+      <thead><tr>
+        <th>Code</th><th>Date</th><th>Total</th><th>Status</th>
+      </tr></thead>
+      <tbody>
+        {% for inv in recent_invoices %}
+        <tr>
+          <td><a href="{{ url_for('invoices.view', invoice_id=inv.id) }}" style="color:var(--primary);text-decoration:none;" class="font-mono">{{ inv.invoice_code }}</a></td>
+          <td class="text-muted">{{ inv.invoice_date }}</td>
+          <td>₹{{ "{:,.2f}".format(inv.grand_total or 0) }}</td>
+          <td><span class="badge badge-{{ inv.status }}">{{ inv.status }}</span></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="text-muted" style="text-align:center;padding:20px;">No invoices yet</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Recent Quotations</span>
+      <a href="{{ url_for('quotations.new') }}" class="btn btn-primary btn-sm">+ New</a>
+    </div>
+    <table class="tbl">
+      <thead><tr>
+        <th>Code</th><th>Date</th><th>Total</th><th>Status</th>
+      </tr></thead>
+      <tbody>
+        {% for q in recent_quotations %}
+        <tr>
+          <td><a href="{{ url_for('quotations.view', quotation_id=q.id) }}" style="color:var(--primary);text-decoration:none;" class="font-mono">{{ q.quotation_code }}</a></td>
+          <td class="text-muted">{{ q.quotation_date }}</td>
+          <td>₹{{ "{:,.2f}".format(q.grand_total or 0) }}</td>
+          <td><span class="badge badge-{{ q.status }}">{{ q.status }}</span></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="text-muted" style="text-align:center;padding:20px;">No quotations yet</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

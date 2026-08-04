@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>INVOX — Login</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #111111;
+      color: #F0F0F0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .login-wrap {
+      width: 100%;
+      max-width: 400px;
+      padding: 20px;
+    }
+    .logo { text-align: center; margin-bottom: 36px; }
+    .logo-text { font-size: 32px; font-weight: 700; letter-spacing: 6px; color: #D4A373; }
+    .logo-sub { font-size: 11px; color: #A9A9A9; letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; }
+
+    .card {
+      background: #1E1E1E;
+      border: 1px solid #2F2F2F;
+      border-radius: 10px;
+      padding: 32px;
+    }
+    .card-title { font-size: 18px; font-weight: 600; margin-bottom: 24px; color: #F0F0F0; }
+
+    .form-group { margin-bottom: 18px; }
+    label { display: block; font-size: 11px; font-weight: 600; color: #A9A9A9; margin-bottom: 6px; letter-spacing: 0.8px; text-transform: uppercase; }
+    input[type=text], input[type=password] {
+      width: 100%;
+      background: #111111;
+      border: 1px solid #2F2F2F;
+      color: #F0F0F0;
+      border-radius: 5px;
+      padding: 11px 14px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    input:focus { border-color: #D4A373; }
+
+    .remember-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 22px;
+      font-size: 13px;
+      color: #A9A9A9;
+    }
+    input[type=checkbox] { accent-color: #D4A373; width: 15px; height: 15px; cursor: pointer; }
+
+    .btn-login {
+      width: 100%;
+      padding: 12px;
+      background: #D4A373;
+      color: #111;
+      border: none;
+      border-radius: 5px;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-login:hover { opacity: 0.88; }
+
+    .error-msg {
+      background: rgba(224,85,85,0.12);
+      border: 1px solid rgba(224,85,85,0.3);
+      color: #e05555;
+      padding: 10px 14px;
+      border-radius: 5px;
+      font-size: 13px;
+      margin-bottom: 18px;
+    }
+
+    .hint { text-align: center; margin-top: 20px; font-size: 12px; color: #A9A9A9; }
+  </style>
+</head>
+<body>
+  <div class="login-wrap">
+    <div class="logo">
+      <div class="logo-text">INVOX</div>
+      <div class="logo-sub">Billing &amp; Quotations</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Sign in to your account</div>
+      {% if error %}
+        <div class="error-msg">{{ error }}</div>
+      {% endif %}
+      <form method="POST">
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" name="username" autofocus autocomplete="username" required>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" name="password" autocomplete="current-password" required>
+        </div>
+        <div class="remember-row">
+          <input type="checkbox" name="remember_me" id="remember_me">
+          <label for="remember_me" style="text-transform:none;font-size:13px;letter-spacing:0;margin:0;color:#A9A9A9;">Remember me</label>
+        </div>
+        <button type="submit" class="btn-login">LOGIN</button>
+      </form>
+    </div>
+    <div class="hint">Default: <strong style="color:#D4A373;">admin</strong> / <strong style="color:#D4A373;">admin123</strong></div>
+  </div>
+</body>
+</html>
