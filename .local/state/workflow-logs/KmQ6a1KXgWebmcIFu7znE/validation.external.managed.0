@@ -1,0 +1,40 @@
+VERDICT: REJECTED
+The task is not complete because a core advertised feature (PDF download for invoices/quotations) is currently broken at runtime.
+
+Critical findings:
+- Invoice and quotation PDF endpoints return 500 instead of a file download. The generated path uses Windows-style `D:/...` from the legacy config, and Flask resolves it as a relative path under the app root (`.../web/D:/...`), causing `FileNotFoundError` in `send_file`.
+- This is a user-facing functional failure directly contradicting the stated scope (“PDF download”).
+- Core web routes (login, dashboard, customers, products, invoices, quotations, settings) are registered and reachable; basic auth gating and CRUD page loads work in smoke checks.
+
+Security:
+- No serious security violation observed that changes the verdict.
+- SAST warning for binding host `0.0.0.0` is expected for Replit/web deployment context and not a blocker here.
+
+Next actions:
+1) Fix PDF path handling so generated files are passed to `send_file` as valid absolute paths in this environment (normalize with `Path(...).resolve()` and/or ensure config root is platform-correct).
+2) Add a focused integration test for `/invoices/<id>/pdf` and `/quotations/<id>/pdf` asserting HTTP 200 and file response after creating sample records.
+3) Re-run smoke checks for invoice/quotation create→view→pdf flows before marking task complete.
+
+Memory note: `.agents/memory/invox-web.md` contains mostly code-derivable implementation details (specific file paths/routes/entrypoints) rather than durable lessons; consider condensing to long-lived decisions and operational constraints.
+
+VERDICT: REJECTED
+VERDICT: REJECTED
+The task is not complete because a core advertised feature (PDF download for invoices/quotations) is currently broken at runtime.
+
+Critical findings:
+- Invoice and quotation PDF endpoints return 500 instead of a file download. The generated path uses Windows-style `D:/...` from the legacy config, and Flask resolves it as a relative path under the app root (`.../web/D:/...`), causing `FileNotFoundError` in `send_file`.
+- This is a user-facing functional failure directly contradicting the stated scope (“PDF download”).
+- Core web routes (login, dashboard, customers, products, invoices, quotations, settings) are registered and reachable; basic auth gating and CRUD page loads work in smoke checks.
+
+Security:
+- No serious security violation observed that changes the verdict.
+- SAST warning for binding host `0.0.0.0` is expected for Replit/web deployment context and not a blocker here.
+
+Next actions:
+1) Fix PDF path handling so generated files are passed to `send_file` as valid absolute paths in this environment (normalize with `Path(...).resolve()` and/or ensure config root is platform-correct).
+2) Add a focused integration test for `/invoices/<id>/pdf` and `/quotations/<id>/pdf` asserting HTTP 200 and file response after creating sample records.
+3) Re-run smoke checks for invoice/quotation create→view→pdf flows before marking task complete.
+
+Memory note: `.agents/memory/invox-web.md` contains mostly code-derivable implementation details (specific file paths/routes/entrypoints) rather than durable lessons; consider condensing to long-lived decisions and operational constraints.
+
+VERDICT: REJECTED

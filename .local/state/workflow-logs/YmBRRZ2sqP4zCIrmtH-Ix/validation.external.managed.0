@@ -1,0 +1,40 @@
+VERDICT: REJECTED
+The web conversion is not ready to mark complete because invoice and quotation creation/editing can silently drop line items and persist zero-total documents.
+
+Critical findings:
+- `web/routes/invoices.py` and `web/routes/quotations.py` use `_parse_items()` with a sequential `while items[0] ... items[1] ...` loop. If index `0` is missing, parsing stops immediately and ignores later rows.
+- The UI allows this state naturally: users can remove row 0 and add another row (which becomes index 1). Submitting then creates/updates an invoice/quotation with no parsed items and totals of 0, without blocking validation.
+- I verified this behavior with Flask test-client posts: payloads containing only `items[1]...` are accepted, and saved records have `subtotal=0`, `gst=0`, `grand_total=0`, and `line_items=0`.
+- This is a functional data-integrity failure in core flows (invoices/quotations/PDF pipeline), so approval would be risky.
+
+Security:
+- No serious security violation observed in VERDICT: REJECTED
+scope. (SAST host binding to `0.0.0.0` is expected for Replit preview and is not a blocking issue here.)
+
+Next actions:
+1) Replace index-walk parsing with key discovery (collecThe web conversion is not ready to mark complete because invoice and quotation creation/editing can silently drop line items and persist zero-total documents.
+t all present `items[<n>]` indices, sort, parse each
+), or enforce contiguous reindexing server-side before parse.
+Critical findings:
+2) Add server-side validation for invoice/quotation submit: require at least on- `web/routes/invoices.py` and `web/routes/quotations.py` use `_parse_items()` with a sequential `while items[0] ... items[1] ...` loop. If index `0` is missing, parsing stops immediately and ignores later rows.
+e valid line item and reject/flash error otherwise.
+3) Add regression tests for - The UI allows this state naturally: users can remove row 0 and add another row (which becomes index 1). Submitting then creates/updates an invoice/quotation with no parsed items and totals of 0, without blocking validation.
+non-contiguous item indices and “delete first row then submit” f- I verified this behavior with Flask test-client posts: payloads containing only `items[1]...` are accepted, and saved records have `subtotal=0`, `gst=0`, `grand_total=0`, and `line_items=0`.
+low for both invoices and quotations.
+
+Memory note: `.agents/memory/i- This is a functional data-integrity failure in core flows (invoices/quotations/PDF pipeline), so approval would be risky.
+nvox-web.md` and `MEMORY.md` are mostly implementation-changelog /
+ code-derivable environment details (run command, file layout) rather thaSecurity:
+n durable cross-session lessons; trim to high-level durable decisions.- No serious security violation observed in scope. (SAST host binding to `0.0.0.0` is expected for Replit preview and is not a blocking issue here.)
+
+
+VERDICT: REJECTED
+
+Next actions:
+1) Replace index-walk parsing with key discovery (collect all present `items[<n>]` indices, sort, parse each), or enforce contiguous reindexing server-side before parse.
+2) Add server-side validation for invoice/quotation submit: require at least one valid line item and reject/flash error otherwise.
+3) Add regression tests for non-contiguous item indices and “delete first row then submit” flow for both invoices and quotations.
+
+Memory note: `.agents/memory/invox-web.md` and `MEMORY.md` are mostly implementation-changelog / code-derivable environment details (run command, file layout) rather than durable cross-session lessons; trim to high-level durable decisions.
+
+VERDICT: REJECTED

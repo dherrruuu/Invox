@@ -1,0 +1,33 @@
+ * Serving Flask app 'web'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://172.24.0.2:5000
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [04/Aug/2026 13:58:57] "[32mGET / HTTP/1.1[0m" 302 -
+127.0.0.1 - - [04/Aug/2026 13:58:57] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 13:59:36] "[32mPOST /login HTTP/1.1[0m" 302 -
+127.0.0.1 - - [04/Aug/2026 13:59:37] "GET /dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 14:02:30] "GET /customers/ HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 14:02:32] "GET /invoices/ HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 14:02:37] "GET /invoices/new HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 14:03:28] "[32mPOST /invoices/new HTTP/1.1[0m" 302 -
+127.0.0.1 - - [04/Aug/2026 14:03:28] "GET /invoices/2 HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 14:03:36] "GET /invoices/2/pdf HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 14:04:53] "GET /invoices/2/edit HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 14:05:05] "[32mPOST /invoices/2/edit HTTP/1.1[0m" 302 -
+127.0.0.1 - - [04/Aug/2026 14:05:05] "GET /invoices/2 HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 14:05:07] "GET /dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 14:05:16] "GET /products/ HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 14:05:20] "GET /customers/ HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 14:05:29] "GET /settings/ HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 14:05:33] "GET /dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 14:06:06] "[32mGET /logout HTTP/1.1[0m" 302 -
+127.0.0.1 - - [04/Aug/2026 14:06:06] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 14:06:49] "[32mGET /invoices/2/pdf HTTP/1.1[0m" 302 -
+127.0.0.1 - - [04/Aug/2026 14:06:50] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 14:07:19] "[32mGET /products/ HTTP/1.1[0m" 302 -
+127.0.0.1 - - [04/Aug/2026 14:07:19] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 14:08:51] "[32mGET /logout HTTP/1.1[0m" 302 -
+127.0.0.1 - - [04/Aug/2026 14:08:52] "GET /login HTTP/1.1" 200 -

@@ -1,0 +1,40 @@
+ * Serving Flask app 'web'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://172.24.0.2:5000
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [04/Aug/2026 12:45:58] "[32mGET / HTTP/1.1[0m" 302 -
+127.0.0.1 - - [04/Aug/2026 12:45:58] "GET /dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 12:46:01] "GET /settings/ HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 12:46:03] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 12:46:04] "GET /products/ HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 12:46:05] "GET /invoices/ HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 12:46:05] "GET /quotations/ HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 12:46:06] "GET /customers/ HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 12:46:07] "GET /dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 12:46:10] "GET /invoices/ HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 12:46:11] "GET /invoices/new HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 12:47:10] "GET /customers/ HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 12:47:12] "GET /customers/new HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 12:47:19] "[32mPOST /customers/new HTTP/1.1[0m" 302 -
+127.0.0.1 - - [04/Aug/2026 12:47:19] "GET /customers/ HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 12:47:22] "GET /invoices/ HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 12:47:24] "GET /invoices/new HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 12:47:33] "[33mGET /robots.txt HTTP/1.1[0m" 404 -
+127.0.0.1 - - [04/Aug/2026 12:47:34] "[33mGET /robots.txt HTTP/1.1[0m" 404 -
+127.0.0.1 - - [04/Aug/2026 12:47:35] "[32mGET / HTTP/1.1[0m" 302 -
+127.0.0.1 - - [04/Aug/2026 12:47:36] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 12:47:53] "[32mPOST /invoices/new HTTP/1.1[0m" 302 -
+127.0.0.1 - - [04/Aug/2026 12:47:53] "GET /invoices/2 HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 12:48:03] "GET /dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 12:48:05] "GET /invoices/2 HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 12:48:09] "GET /invoices/2/edit HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 12:48:12] "GET /invoices/ HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 12:48:13] "GET /dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 12:48:28] "GET /invoices/ HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 12:48:31] "GET /invoices/2 HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 12:48:33] "GET /invoices/2/edit HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 12:49:10] "[32mGET /customers/ HTTP/1.1[0m" 302 -
+127.0.0.1 - - [04/Aug/2026 12:49:11] "GET /login HTTP/1.1" 200 -

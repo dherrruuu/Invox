@@ -1,0 +1,68 @@
+ * Serving Flask app 'web'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://172.24.0.2:5000
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [05/Aug/2026 08:44:34] "[32mGET / HTTP/1.1[0m" 302 -
+127.0.0.1 - - [05/Aug/2026 08:44:34] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [05/Aug/2026 08:44:41] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [05/Aug/2026 08:44:41] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+127.0.0.1 - - [05/Aug/2026 08:45:23] "[32mPOST /login HTTP/1.1[0m" 302 -
+127.0.0.1 - - [05/Aug/2026 08:45:23] "GET /dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [05/Aug/2026 08:45:23] "GET /dashboard HTTP/1.1" 200 -
+[2026-08-05 08:45:23,544] ERROR in app: Exception on /invoices/ [GET]
+Traceback (most recent call last):
+  File "/home/runner/workspace/.venv/lib/python3.12/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.venv/lib/python3.12/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.venv/lib/python3.12/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.venv/lib/python3.12/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/web/routes/auth.py", line 17, in decorated
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/web/routes/invoices.py", line 111, in index
+    return render_template("invoices/list.html", invoices=invoices, paid_map=paid_map, user=session["user"])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.venv/lib/python3.12/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.venv/lib/python3.12/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.venv/lib/python3.12/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+  File "/home/runner/workspace/.venv/lib/python3.12/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/runner/workspace/web/templates/invoices/list.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "/home/runner/workspace/web/templates/base.html", line 312, in top-level template code
+    {% block content %}{% endblock %}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/web/templates/invoices/list.html", line 33, in block 'content'
+    <td>{{ inv.customer.name if inv.customer else '—' }}</td>
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.venv/lib/python3.12/site-packages/jinja2/environment.py", line 490, in getattr
+    return getattr(obj, attribute)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.venv/lib/python3.12/site-packages/sqlalchemy/orm/attributes.py", line 569, in __get__
+    return self.impl.get(state, dict_)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.venv/lib/python3.12/site-packages/sqlalchemy/orm/attributes.py", line 1096, in get
+    value = self._fire_loader_callables(state, key, passive)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.venv/lib/python3.12/site-packages/sqlalchemy/orm/attributes.py", line 1131, in _fire_loader_callables
+    return self.callable_(state, passive)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/workspace/.venv/lib/python3.12/site-packages/sqlalchemy/orm/strategies.py", line 922, in _load_for_state
+    raise orm_exc.DetachedInstanceError(
+sqlalchemy.orm.exc.DetachedInstanceError: Parent instance <Invoice at 0x7fa75c10ecc0> is not bound to a Session; lazy load operation of attribute 'customer' cannot proceed (Background on this error at: https://sqlalche.me/e/20/bhk3)
+127.0.0.1 - - [05/Aug/2026 08:45:23] "[35m[1mGET /invoices/ HTTP/1.1[0m" 500 -

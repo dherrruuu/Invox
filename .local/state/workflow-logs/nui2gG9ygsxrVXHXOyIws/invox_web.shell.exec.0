@@ -1,0 +1,21 @@
+ * Serving Flask app 'web'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://172.24.0.2:5000
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [04/Aug/2026 12:49:17] "[32mGET / HTTP/1.1[0m" 302 -
+127.0.0.1 - - [04/Aug/2026 12:49:17] "GET /dashboard HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 12:49:37] "[32mPOST /login HTTP/1.1[0m" 302 -
+127.0.0.1 - - [04/Aug/2026 12:49:37] "GET /invoices/3/pdf HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 12:49:37] "GET /invoices/ HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 12:49:37] "GET /customers/ HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 12:49:43] "GET /invoices/ HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 12:49:47] "GET /invoices/3 HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 12:51:39] "[32mGET /invoices/2/edit HTTP/1.1[0m" 302 -
+127.0.0.1 - - [04/Aug/2026 12:51:39] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 12:52:29] "[32mGET /customers/new HTTP/1.1[0m" 302 -
+127.0.0.1 - - [04/Aug/2026 12:52:29] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [04/Aug/2026 12:52:43] "[32mGET /dashboard HTTP/1.1[0m" 302 -
+127.0.0.1 - - [04/Aug/2026 12:52:43] "GET /login HTTP/1.1" 200 -
