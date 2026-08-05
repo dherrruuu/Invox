@@ -7,50 +7,37 @@
 
 {% block head %}
 <style>
-  .items-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 12px; }
-  .items-table th {
-    text-align: left; padding: 8px 10px;
+  .items-wrap { overflow-x: auto; }
+  .items-tbl { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 900px; }
+  .items-tbl th {
+    text-align: left; padding: 7px 6px;
     font-size: 10px; letter-spacing: .8px; text-transform: uppercase;
-    color: var(--muted); border-bottom: 1px solid var(--border);
+    color: var(--muted); border-bottom: 1px solid var(--border); white-space: nowrap;
   }
-  .items-table td { padding: 6px 6px; border-bottom: 1px solid #1a1a1a; vertical-align: middle; }
-  .items-table input[type=text], .items-table input[type=number] {
-    padding: 6px 8px; font-size: 13px; border-radius: 4px;
-    background: var(--bg); border: 1px solid var(--border); color: var(--text);
-    width: 100%;
+  .items-tbl td { padding: 4px 4px; border-bottom: 1px solid #1a1a1a; vertical-align: middle; }
+  .items-tbl input[type=text], .items-tbl input[type=number] {
+    padding: 6px 7px; font-size: 13px; border-radius: 4px;
+    background: var(--bg); border: 1px solid var(--border); color: var(--text); width: 100%;
   }
-  .items-table input:focus { border-color: var(--primary); outline: none; }
-  .col-desc { min-width: 200px; }
-  .col-sm { width: 80px; }
-  .col-md { width: 100px; }
-  .col-btn { width: 36px; }
-  .remove-row-btn {
-    background: transparent; border: none; color: var(--danger);
-    cursor: pointer; font-size: 16px; padding: 0 6px; opacity: .7;
-  }
-  .remove-row-btn:hover { opacity: 1; }
-  .totals-summary {
-    background: var(--surface2); border-radius: 6px;
-    padding: 14px 18px; width: 260px; margin-left: auto;
-  }
-  .totals-summary .row { display: flex; justify-content: space-between; padding: 3px 0; font-size: 13px; }
-  .totals-summary .row.grand {
-    border-top: 1px solid var(--border); margin-top: 8px;
-    padding-top: 8px; font-size: 15px; font-weight: 700; color: var(--primary);
-  }
+  .items-tbl input[type=text]:focus, .items-tbl input[type=number]:focus { border-color: var(--primary); outline: none; }
+  .items-tbl input[readonly] { background: #181818; color: var(--muted); cursor: default; }
+  .rm-btn { background: transparent; border: none; color: var(--danger); cursor: pointer; font-size: 16px; padding: 0 4px; opacity: .6; }
+  .rm-btn:hover { opacity: 1; }
+  .totals-box { background: var(--surface2); border-radius: 6px; padding: 14px 18px; min-width: 240px; margin-left: auto; }
+  .totals-box .tr { display: flex; justify-content: space-between; padding: 3px 0; font-size: 13px; }
+  .totals-box .tr.grand { border-top: 1px solid var(--border); margin-top: 6px; padding-top: 8px; font-size: 15px; font-weight: 700; color: var(--primary); }
 </style>
 {% endblock %}
 
 {% block content %}
-<form method="POST" id="invoice-form">
-  <!-- Header -->
-  <div class="card mb-2" style="margin-bottom:16px;">
+<form method="POST" id="inv-form">
+  <div class="card" style="margin-bottom:16px;">
     <div class="card-body">
       <div class="form-row cols-3">
         <div class="form-group">
           <label>Customer *</label>
           <select name="customer_id" required>
-            <option value="">— Select customer —</option>
+            <option value="">— Select —</option>
             {% for c in customers %}
             <option value="{{ c.customer_id }}" {% if data.get('customer_id')|string == c.customer_id|string %}selected{% endif %}>
               {{ c.name }}{% if c.company_name %} ({{ c.company_name }}){% endif %}
@@ -60,21 +47,25 @@
         </div>
         <div class="form-group">
           <label>Invoice Date</label>
-          <input type="date" name="invoice_date" value="{{ data.get('invoice_date', '') or today }}">
+          <input type="date" name="invoice_date" value="{{ data.get('invoice_date','') or today }}">
         </div>
         <div class="form-group">
           <label>Status</label>
           <select name="status">
-            {% for s in ['draft','finalized','paid','cancelled'] %}
+            {% for s in statuses %}
             <option value="{{ s }}" {% if data.get('status','draft') == s %}selected{% endif %}>{{ s.title() }}</option>
             {% endfor %}
           </select>
         </div>
       </div>
-      <div class="form-row cols-2">
+      <div class="form-row cols-3">
+        <div class="form-group">
+          <label>GST %</label>
+          <input type="number" name="gst_rate" id="gst_rate" value="{{ data.get('gst_rate', 18) }}" step="0.01" min="0">
+        </div>
         <div class="form-group">
           <label>Discount (₹)</label>
-          <input type="number" name="discount_amount" value="{{ data.get('discount_amount', 0) }}" step="0.01" min="0" id="discount_input">
+          <input type="number" name="discount_amount" id="discount_amt" value="{{ data.get('discount_amount', 0) }}" step="0.01" min="0">
         </div>
         <div class="form-group">
           <label>Notes</label>
@@ -84,16 +75,15 @@
     </div>
   </div>
 
-  <!-- Line Items -->
   <div class="card" style="margin-bottom:16px;">
     <div class="card-header">
       <span class="card-title">Line Items</span>
       <div class="flex gap-2">
         {% if products %}
-        <select id="product-picker" style="background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:5px;padding:6px 10px;font-size:12px;">
+        <select id="prod-pick" style="background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:5px;padding:5px 9px;font-size:12px;">
           <option value="">Quick-add product…</option>
           {% for p in products %}
-          <option value="{{ p.product_id }}" data-name="{{ p.name }}" data-rate="{{ p.rate }}" data-unit="{{ p.unit }}" data-gst="{{ p.gst_percentage }}">
+          <option value="{{ p.product_id }}" data-name="{{ p.name }}" data-rate="{{ p.rate }}">
             {{ p.name }} — ₹{{ "{:,.2f}".format(p.rate) }}
           </option>
           {% endfor %}
@@ -102,27 +92,28 @@
         <button type="button" class="btn btn-secondary btn-sm" onclick="addRow()">+ Add Row</button>
       </div>
     </div>
-    <div style="overflow-x:auto;padding:12px 16px;">
-      <table class="items-table">
+    <div class="items-wrap" style="padding:12px 14px;">
+      <table class="items-tbl">
         <thead><tr>
-          <th class="col-desc">Description</th>
-          <th class="col-sm">Size</th>
-          <th class="col-sm">Unit</th>
-          <th class="col-sm">Qty</th>
-          <th class="col-md">Rate (₹)</th>
-          <th class="col-sm">GST %</th>
-          <th class="col-md">Amount (₹)</th>
-          <th class="col-btn"></th>
+          <th style="min-width:160px;">Description</th>
+          <th style="width:70px;">Length</th>
+          <th style="width:70px;">Height</th>
+          <th style="width:60px;">Nos</th>
+          <th style="width:75px;">Qty</th>
+          <th style="width:90px;">Rate (₹)</th>
+          <th style="width:95px;">Amount (₹)</th>
+          <th style="min-width:120px;">Remarks</th>
+          <th style="width:28px;"></th>
         </tr></thead>
         <tbody id="items-body"></tbody>
       </table>
     </div>
-    <div style="padding:8px 16px 16px;display:flex;justify-content:flex-end;">
-      <div class="totals-summary">
-        <div class="row"><span class="text-muted">Subtotal</span><span id="sum-subtotal">₹0.00</span></div>
-        <div class="row"><span class="text-muted">GST</span><span id="sum-gst">₹0.00</span></div>
-        <div class="row"><span class="text-muted">Discount</span><span id="sum-discount">₹0.00</span></div>
-        <div class="row grand"><span>Grand Total</span><span id="sum-grand">₹0.00</span></div>
+    <div style="padding:4px 14px 14px; display:flex; justify-content:flex-end;">
+      <div class="totals-box">
+        <div class="tr"><span class="text-muted">Subtotal</span><span id="s-sub">₹0.00</span></div>
+        <div class="tr"><span class="text-muted">GST</span><span id="s-gst">₹0.00</span></div>
+        <div class="tr"><span class="text-muted">Discount</span><span id="s-disc">₹0.00</span></div>
+        <div class="tr grand"><span>Grand Total</span><span id="s-grand">₹0.00</span></div>
       </div>
     </div>
   </div>
@@ -135,84 +126,118 @@
 
 <script>
 const existingItems = {{ items | tojson }};
-let rowIndex = 0;
+let rowIdx = 0;
 
-function addRow(desc='', size='', unit='', qty=1, rate=0, gst=18) {
-  const i = rowIndex++;
-  const tbody = document.getElementById('items-body');
+const FIELDS = ['description','length','height','nos','rate','remarks'];
+
+function fmt(n){ return '₹'+parseFloat(n||0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,','); }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;'); }
+
+function recalcRow(i){
+  const get = name => parseFloat(document.querySelector(`[name="items[${i}][${name}]"]`)?.value||0)||0;
+  const L=get('length'), H=get('height'), N=get('nos');
+  const qty = (L||H||N) ? L*H*N : 0;
+  const rate = get('rate');
+  const amt = rate * qty;
+  const qEl = document.getElementById(`qty-${i}`);
+  const aEl = document.getElementById(`amt-${i}`);
+  if(qEl) qEl.value = qty.toFixed(3);
+  if(aEl) aEl.value = amt.toFixed(2);
+  recalcTotals();
+}
+
+function recalcTotals(){
+  let sub=0;
+  document.querySelectorAll('[id^="amt-"]').forEach(el=>{ sub+=parseFloat(el.value||0)||0; });
+  const gstRate = parseFloat(document.getElementById('gst_rate')?.value||0)||0;
+  const disc    = parseFloat(document.getElementById('discount_amt')?.value||0)||0;
+  const gst     = sub * gstRate / 100;
+  const grand   = sub + gst - disc;
+  document.getElementById('s-sub').textContent   = fmt(sub);
+  document.getElementById('s-gst').textContent   = fmt(gst);
+  document.getElementById('s-disc').textContent  = fmt(disc);
+  document.getElementById('s-grand').textContent = fmt(grand);
+}
+
+function addRow(desc='', length='', height='', nos='', rate='', remarks='', qty='', amt=''){
+  const i = rowIdx++;
   const tr = document.createElement('tr');
-  tr.id = 'row-' + i;
+  tr.id = 'row-'+i;
+
+  function inp(name, val, type='text', style=''){
+    const readonlyPart = '';
+    return `<input type="${type}" name="items[${i}][${name}]" value="${esc(val)}" ${style} oninput="recalcRow(${i})" onchange="recalcRow(${i})">`;
+  }
+  function roInp(id, val){
+    return `<input type="number" id="${id}" value="${esc(val)}" readonly tabindex="-1">`;
+  }
+
   tr.innerHTML = `
-    <td class="col-desc"><input type="text" name="items[${i}][description]" value="${esc(desc)}" placeholder="Item description"></td>
-    <td><input type="text" name="items[${i}][size]" value="${esc(size)}" style="width:80px;" placeholder="—"></td>
-    <td><input type="text" name="items[${i}][unit]" value="${esc(unit)}" style="width:70px;"></td>
-    <td><input type="number" name="items[${i}][quantity]" value="${qty}" min="0" step="0.01" style="width:75px;" onchange="recalcRow(${i})" oninput="recalcRow(${i})"></td>
-    <td><input type="number" name="items[${i}][rate]" value="${rate}" min="0" step="0.01" style="width:95px;" onchange="recalcRow(${i})" oninput="recalcRow(${i})"></td>
-    <td><input type="number" name="items[${i}][gst_percentage]" value="${gst}" min="0" step="0.01" style="width:65px;" onchange="recalcRow(${i})" oninput="recalcRow(${i})"></td>
-    <td><input type="number" id="amt-${i}" value="${(qty*rate).toFixed(2)}" readonly style="width:95px;background:var(--surface2);"></td>
-    <td><button type="button" class="remove-row-btn" onclick="removeRow(${i})">✕</button></td>
+    <td><input type="text"   name="items[${i}][description]" value="${esc(desc)}"    placeholder="Item description" data-last-field="false"></td>
+    <td><input type="number" name="items[${i}][length]"      value="${esc(length)}"  step="0.001" min="0" oninput="recalcRow(${i})"></td>
+    <td><input type="number" name="items[${i}][height]"      value="${esc(height)}"  step="0.001" min="0" oninput="recalcRow(${i})"></td>
+    <td><input type="number" name="items[${i}][nos]"         value="${esc(nos)}"     step="0.001" min="0" oninput="recalcRow(${i})"></td>
+    <td>${roInp('qty-'+i, qty||'')}</td>
+    <td><input type="number" name="items[${i}][rate]"        value="${esc(rate)}"    step="0.01"  min="0" oninput="recalcRow(${i})" class="last-inp" data-row="${i}"></td>
+    <td>${roInp('amt-'+i, amt||'')}</td>
+    <td><input type="text"   name="items[${i}][remarks]"     value="${esc(remarks)}" class="last-inp-remarks" data-row="${i}"></td>
+    <td><button type="button" class="rm-btn" onclick="removeRow(${i})">✕</button></td>
   `;
-  tbody.appendChild(tr);
-  recalcTotals();
-}
+  document.getElementById('items-body').appendChild(tr);
 
-function esc(s) { return String(s).replace(/"/g,'&quot;'); }
-
-function removeRow(i) {
-  const row = document.getElementById('row-'+i);
-  if (row) row.remove();
-  recalcTotals();
-}
-
-function recalcRow(i) {
-  const qty = parseFloat(document.querySelector(`[name="items[${i}][quantity]"]`)?.value || 0);
-  const rate = parseFloat(document.querySelector(`[name="items[${i}][rate]"]`)?.value || 0);
-  const amt = qty * rate;
-  const amtEl = document.getElementById('amt-'+i);
-  if (amtEl) amtEl.value = amt.toFixed(2);
-  recalcTotals();
-}
-
-function recalcTotals() {
-  let subtotal = 0, gstTotal = 0;
-  const tbody = document.getElementById('items-body');
-  const rows = tbody.querySelectorAll('tr');
-  rows.forEach(row => {
-    const id = row.id.replace('row-','');
-    const qty = parseFloat(row.querySelector(`[name="items[${id}][quantity]"]`)?.value || 0);
-    const rate = parseFloat(row.querySelector(`[name="items[${id}][rate]"]`)?.value || 0);
-    const gstPct = parseFloat(row.querySelector(`[name="items[${id}][gst_percentage]"]`)?.value || 0);
-    const amt = qty * rate;
-    subtotal += amt;
-    gstTotal += amt * gstPct / 100;
+  // Auto-add row when Tab/Enter pressed on last editable field (Remarks)
+  const remarksEl = tr.querySelector('.last-inp-remarks');
+  remarksEl.addEventListener('keydown', function(e){
+    if(e.key === 'Tab' && !e.shiftKey){
+      const allRows = document.querySelectorAll('#items-body tr');
+      if(tr === allRows[allRows.length-1]){
+        e.preventDefault();
+        addRow();
+        // Focus description of new row
+        const newRow = document.querySelector('#items-body tr:last-child input[type=text]');
+        if(newRow) newRow.focus();
+      }
+    }
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      addRow();
+      const newRow = document.querySelector('#items-body tr:last-child input[type=text]');
+      if(newRow) newRow.focus();
+    }
   });
-  const discount = parseFloat(document.getElementById('discount_input')?.value || 0);
-  const grand = subtotal + gstTotal - discount;
-  document.getElementById('sum-subtotal').textContent = '₹' + subtotal.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
-  document.getElementById('sum-gst').textContent = '₹' + gstTotal.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
-  document.getElementById('sum-discount').textContent = '₹' + discount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
-  document.getElementById('sum-grand').textContent = '₹' + grand.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+
+  recalcTotals();
+  return tr;
+}
+
+function removeRow(i){
+  const r = document.getElementById('row-'+i);
+  if(r) r.remove();
+  recalcTotals();
 }
 
 // Product picker
-document.getElementById('product-picker')?.addEventListener('change', function() {
+document.getElementById('prod-pick')?.addEventListener('change', function(){
   const opt = this.options[this.selectedIndex];
-  if (!opt.value) return;
-  addRow(opt.dataset.name, '', opt.dataset.unit, 1, parseFloat(opt.dataset.rate), parseFloat(opt.dataset.gst));
+  if(!opt.value) return;
+  const row = addRow(opt.dataset.name, '', '', '', opt.dataset.rate, '');
   this.value = '';
+  row.querySelector('[name*="[length]"]')?.focus();
 });
 
-// Discount input recalc
-document.getElementById('discount_input')?.addEventListener('input', recalcTotals);
+// GST / discount recalc
+document.getElementById('gst_rate')?.addEventListener('input', recalcTotals);
+document.getElementById('discount_amt')?.addEventListener('input', recalcTotals);
 
-// Load existing items
-existingItems.forEach(it => addRow(it.description, it.size||'', it.unit||'', it.quantity, it.rate, it.gst_percentage));
-if (existingItems.length === 0) addRow();
+// Load existing rows
+existingItems.forEach(it => addRow(
+  it.description, it.length||'', it.height||'', it.nos||'',
+  it.rate||'', it.remarks||'', it.quantity||'', it.amount||''
+));
+if(existingItems.length === 0) addRow();
 
-// Set today's date if empty
-const dateInput = document.querySelector('[name=invoice_date]');
-if (dateInput && !dateInput.value) {
-  dateInput.value = new Date().toISOString().slice(0,10);
-}
+// Set today if empty
+const di = document.querySelector('[name=invoice_date]');
+if(di && !di.value) di.value = new Date().toISOString().slice(0,10);
 </script>
 {% endblock %}

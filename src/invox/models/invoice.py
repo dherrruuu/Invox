@@ -30,6 +30,7 @@ class Invoice(Base):
 
     customer = relationship("Customer", back_populates="invoices")
     line_items = relationship("InvoiceItem", back_populates="invoice", cascade="all, delete-orphan", order_by="InvoiceItem.id")
+    payments = relationship("Payment", back_populates="invoice", cascade="all, delete-orphan", order_by="Payment.payment_date")
 
     def __init__(self, **kwargs):
         customer = kwargs.pop("customer", None)

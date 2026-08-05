@@ -8,6 +8,7 @@ def create_all_tables(engine=None) -> None:
     from ..models.customer import Customer  # noqa: F401
     from ..models.invoice import Invoice  # noqa: F401
     from ..models.invoice_item import InvoiceItem  # noqa: F401
+    from ..models.payment import Payment  # noqa: F401
     from ..models.product import Product  # noqa: F401
     from ..models.quotation import Quotation  # noqa: F401
     from ..models.quotation_item import QuotationItem  # noqa: F401

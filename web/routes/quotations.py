@@ -2,12 +2,16 @@
 from __future__ import annotations
 
 import os
+import re
 from datetime import date
 from pathlib import Path
 
 from flask import (Blueprint, abort, flash, redirect, render_template, request,
                    send_file, session, url_for)
 
+from src.invox.db.connection import get_session
+from src.invox.models.quotation import Quotation as QModel
+from src.invox.models.quotation_item import QuotationItem
 from src.invox.services.customer_service import CustomerService
 from src.invox.services.product_service import ProductService
 from src.invox.services.quotation_service import QuotationService
@@ -16,10 +20,11 @@ from .auth import login_required
 
 quotations_bp = Blueprint("quotations", __name__, url_prefix="/quotations")
 
+STATUSES = ["draft", "partial", "final", "cancelled"]
+
 
 def _parse_items(form):
-    """Parse line items from form, collecting all present indices (non-contiguous safe)."""
-    import re
+    """Parse line items — non-contiguous index safe."""
     indices = sorted({
         int(m.group(1))
         for key in form
@@ -29,20 +34,60 @@ def _parse_items(form):
     items = []
     for i in indices:
         try:
-            qty = float(form.get(f"items[{i}][quantity]", 0) or 0)
-            rate = float(form.get(f"items[{i}][rate]", 0) or 0)
-            gst = float(form.get(f"items[{i}][gst_percentage]", 18) or 18)
+            length = float(form.get(f"items[{i}][length]", 0) or 0)
+            height = float(form.get(f"items[{i}][height]", 0) or 0)
+            nos    = float(form.get(f"items[{i}][nos]",    0) or 0)
+            qty    = length * height * nos if (length or height or nos) else float(form.get(f"items[{i}][quantity]", 0) or 0)
+            rate   = float(form.get(f"items[{i}][rate]",   0) or 0)
         except ValueError:
-            qty, rate, gst = 0.0, 0.0, 18.0
+            length = height = nos = qty = rate = 0.0
+        amount = rate * qty
         items.append({
             "description": form.get(f"items[{i}][description]", "").strip(),
-            "unit": form.get(f"items[{i}][unit]", "").strip(),
+            "length": length,
+            "height": height,
+            "nos":    nos,
             "quantity": qty,
-            "rate": rate,
-            "amount": qty * rate,
-            "gst_percentage": gst,
+            "rate":   rate,
+            "amount": amount,
+            "gst_percentage": 0.0,
+            "remarks": form.get(f"items[{i}][remarks]", "").strip(),
         })
     return items
+
+
+def _save_quotation_items(db, quotation_id, items, notes, status, discount, gst_rate):
+    q = db.query(QModel).filter_by(id=quotation_id).first()
+    if not q:
+        return
+    for li in list(q.line_items):
+        db.delete(li)
+    db.flush()
+    for it in items:
+        li = QuotationItem(
+            quotation_id=quotation_id,
+            description=it["description"],
+            length=it["length"],
+            height=it["height"],
+            nos=it["nos"],
+            quantity=it["quantity"],
+            rate=it["rate"],
+            amount=it["amount"],
+            gst_percentage=0.0,
+            remarks=it["remarks"],
+        )
+        db.add(li)
+    db.flush()
+    subtotal    = sum(it["amount"] for it in items)
+    gst_amount  = subtotal * float(gst_rate or 0) / 100.0
+    grand_total = subtotal + gst_amount - float(discount or 0)
+    q.notes          = notes
+    q.status         = status
+    q.discount_amount = float(discount or 0)
+    q.subtotal        = subtotal
+    q.gst_amount      = gst_amount
+    q.grand_total     = grand_total
+    db.commit()
 
 
 @quotations_bp.route("/")
@@ -56,40 +101,29 @@ def index():
 @login_required
 def new():
     customers = CustomerService().get_all_customers()
-    products = ProductService().list_products()
+    products  = ProductService().list_products()
 
     if request.method == "POST":
         try:
-            customer_id = int(request.form.get("customer_id", 0))
-            quotation_date = request.form.get("quotation_date") or str(date.today())
-            notes = request.form.get("notes", "").strip()
-            status = request.form.get("status", "draft")
-            try:
-                discount = float(request.form.get("discount_amount", 0) or 0)
-            except ValueError:
-                discount = 0.0
-            items = _parse_items(request.form)
+            customer_id     = int(request.form.get("customer_id", 0))
+            quotation_date  = request.form.get("quotation_date") or str(date.today())
+            notes           = request.form.get("notes", "").strip()
+            status          = request.form.get("status", "draft")
+            discount        = float(request.form.get("discount_amount", 0) or 0)
+            gst_rate        = float(request.form.get("gst_rate", 18) or 18)
+            items           = _parse_items(request.form)
+
             if not items:
                 raise ValueError("At least one line item is required.")
 
-            svc = QuotationService()
-            quotation = svc.create_quotation(
-                customer_id,
-                items=items,
-                date_value=date.fromisoformat(quotation_date),
-            )
-            # Update notes, status, discount
-            from src.invox.db.connection import get_session
-            from src.invox.models.quotation import Quotation as QModel
+            svc       = QuotationService()
+            quotation = svc.create_quotation(customer_id, items=[], date_value=date.fromisoformat(quotation_date))
+
             db = get_session()
-            q = db.query(QModel).filter_by(id=quotation.id).first()
-            if q:
-                q.notes = notes
-                q.status = status
-                q.discount_amount = discount
-                q.refresh_totals()
-                db.commit()
-            db.close()
+            try:
+                _save_quotation_items(db, quotation.id, items, notes, status, discount, gst_rate)
+            finally:
+                db.close()
 
             flash("Quotation created successfully.", "success")
             return redirect(url_for("quotations.view", quotation_id=quotation.id))
@@ -98,7 +132,8 @@ def new():
 
     return render_template("quotations/form.html",
                            customers=customers, products=products,
-                           data={}, items=[], user=session["user"], editing=False)
+                           data={}, items=[], user=session["user"],
+                           editing=False, statuses=STATUSES)
 
 
 @quotations_bp.route("/<int:quotation_id>")
@@ -113,85 +148,67 @@ def view(quotation_id):
 @quotations_bp.route("/<int:quotation_id>/edit", methods=["GET", "POST"])
 @login_required
 def edit(quotation_id):
-    svc = QuotationService()
-    quotation = svc.get_quotation(quotation_id)
-    if not quotation:
-        abort(404)
     customers = CustomerService().get_all_customers()
-    products = ProductService().list_products()
+    products  = ProductService().list_products()
 
-    if request.method == "POST":
-        try:
-            customer_id = int(request.form.get("customer_id", quotation.customer_id))
-            quotation_date = request.form.get("quotation_date") or str(quotation.quotation_date)
-            notes = request.form.get("notes", "").strip()
-            status = request.form.get("status", quotation.status)
+    db = get_session()
+    try:
+        q = db.query(QModel).filter_by(id=quotation_id).first()
+        if not q:
+            abort(404)
+
+        if request.method == "POST":
             try:
-                discount = float(request.form.get("discount_amount", 0) or 0)
-            except ValueError:
-                discount = 0.0
-            items = _parse_items(request.form)
-            if not items:
-                raise ValueError("At least one line item is required.")
+                customer_id    = int(request.form.get("customer_id", q.customer_id))
+                quotation_date = request.form.get("quotation_date") or str(q.quotation_date)
+                notes          = request.form.get("notes", "").strip()
+                status         = request.form.get("status", q.status)
+                discount       = float(request.form.get("discount_amount", 0) or 0)
+                gst_rate       = float(request.form.get("gst_rate", 18) or 18)
+                items          = _parse_items(request.form)
 
-            from src.invox.db.connection import get_session
-            from src.invox.models.quotation import Quotation as QModel
-            from src.invox.models.quotation_item import QuotationItem
-            db = get_session()
-            db_q = db.query(QModel).filter_by(id=quotation_id).first()
-            if db_q:
-                db_q.customer_id = customer_id
-                db_q.quotation_date = date.fromisoformat(quotation_date)
-                db_q.notes = notes
-                db_q.status = status
-                db_q.discount_amount = discount
-                for li in list(db_q.line_items):
-                    db.delete(li)
-                db.flush()
-                for it in items:
-                    li = QuotationItem(
-                        quotation_id=quotation_id,
-                        description=it["description"],
-                        unit=it["unit"],
-                        quantity=it["quantity"],
-                        rate=it["rate"],
-                        amount=it["amount"],
-                        gst_percentage=it["gst_percentage"],
-                    )
-                    db.add(li)
-                db.flush()
-                db_q.refresh_totals()
-                db.commit()
-            db.close()
+                if not items:
+                    raise ValueError("At least one line item is required.")
 
-            flash("Quotation updated.", "success")
-            return redirect(url_for("quotations.view", quotation_id=quotation_id))
-        except Exception as e:
-            flash(str(e), "error")
+                q.customer_id    = customer_id
+                q.quotation_date = date.fromisoformat(quotation_date)
+                _save_quotation_items(db, quotation_id, items, notes, status, discount, gst_rate)
 
-    data = {
-        "customer_id": quotation.customer_id,
-        "quotation_date": str(quotation.quotation_date),
-        "notes": quotation.notes,
-        "status": quotation.status,
-        "discount_amount": quotation.discount_amount,
-    }
-    items = [
-        {
-            "description": li.description,
-            "unit": li.unit,
-            "quantity": li.quantity,
-            "rate": li.rate,
-            "amount": li.amount,
-            "gst_percentage": li.gst_percentage,
+                flash("Quotation updated.", "success")
+                return redirect(url_for("quotations.view", quotation_id=quotation_id))
+            except Exception as e:
+                flash(str(e), "error")
+
+        data = {
+            "customer_id":    q.customer_id,
+            "quotation_date": str(q.quotation_date),
+            "notes":          q.notes,
+            "status":         q.status,
+            "discount_amount": q.discount_amount,
+            "gst_rate":       18.0,
         }
-        for li in quotation.line_items
-    ]
+        items = [
+            {
+                "description": li.description,
+                "length":      li.length,
+                "height":      li.height,
+                "nos":         li.nos,
+                "quantity":    li.quantity,
+                "rate":        li.rate,
+                "amount":      li.amount,
+                "remarks":     li.remarks,
+            }
+            for li in q.line_items
+        ]
+    finally:
+        db.close()
+
     return render_template("quotations/form.html",
                            customers=customers, products=products,
                            data=data, items=items, user=session["user"],
                            editing=True, quotation_id=quotation_id,
-                           quotation_code=quotation.quotation_code)
+                           quotation_code=q.quotation_code,
+                           statuses=STATUSES)
 
 
 @quotations_bp.route("/<int:quotation_id>/delete", methods=["POST"])
@@ -205,28 +222,52 @@ def delete(quotation_id):
 @quotations_bp.route("/<int:quotation_id>/pdf")
 @login_required
 def pdf(quotation_id):
-    svc = QuotationService()
-    quotation = svc.get_quotation(quotation_id)
-    if not quotation:
-        abort(404)
-    quotation_data = quotation.generate_quotation()
+    db = get_session()
     try:
-        c = CustomerService().get_customer_by_id(quotation.customer_id)
-        quotation_data["customer_name"] = c.name
-        quotation_data["customer_address"] = c.address
-        quotation_data["customer_phone"] = c.phone
-        quotation_data["customer_gst"] = c.gst_number
+        q = db.query(QModel).filter_by(id=quotation_id).first()
+        if not q:
+            abort(404)
+        items_data = [
+            {
+                "description": li.description,
+                "length":      li.length,
+                "height":      li.height,
+                "nos":         li.nos,
+                "quantity":    li.quantity,
+                "rate":        li.rate,
+                "amount":      li.amount,
+                "remarks":     li.remarks,
+            }
+            for li in q.line_items
+        ]
+        quotation_data = {
+            "quotation_number": q.quotation_number,
+            "quotation_code":   q.quotation_code,
+            "date":             q.quotation_date,
+            "subtotal":         q.subtotal,
+            "gst_amount":       q.gst_amount,
+            "discount_amount":  q.discount_amount,
+            "grand_total":      q.grand_total,
+            "items":            items_data,
+        }
+    finally:
+        db.close()
+
+    try:
+        c = CustomerService().get_customer_by_id(q.customer_id)
+        quotation_data.update(customer_name=c.name, customer_address=c.address,
+                              customer_phone=c.phone, customer_gst=c.gst_number)
     except Exception:
         pass
-    from src.invox.services.company_service import CompanyService
-    company = CompanyService().get_profile()
-    quotation_data["company_name"] = company.company_name
-    quotation_data["company_address"] = company.address
-    quotation_data["company_phone"] = company.phone_number
-    quotation_data["company_gst"] = company.gst_number
-    quotation_data["bank_details"] = company.bank_details
-    quotation_data["terms_and_conditions"] = company.terms_and_conditions
 
-    path = svc.generate_quotation_pdf(quotation_data)
+    from src.invox.services.company_service import CompanyService
+    co = CompanyService().get_profile()
+    quotation_data.update(company_name=co.company_name, company_address=co.address,
+                          company_phone=co.phone_number, company_gst=co.gst_number,
+                          bank_details=co.bank_details,
+                          terms_and_conditions=co.terms_and_conditions)
+
+    from src.invox.services.pdf_service import PDFService
+    path = PDFService().generate_quotation_pdf(quotation_data)
     abs_path = str(Path(path).resolve())
     return send_file(abs_path, as_attachment=True, download_name=os.path.basename(abs_path))

@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}Payments — {{ invoice.invoice_code }}{% endblock %}
+{% block page_title %}Payments: {{ invoice.invoice_code }}{% endblock %}
+{% block topbar_actions %}
+  <div class="flex gap-2">
+    <a href="{{ url_for('invoices.view', invoice_id=invoice.id) }}" class="btn btn-secondary">← Invoice</a>
+    <a href="{{ url_for('invoices.index') }}" class="btn btn-ghost">All Invoices</a>
+  </div>
+{% endblock %}
+
+{% block head %}
+<style>
+  .pay-summary { display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+  .pay-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px 22px; min-width: 160px; }
+  .pay-card .lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); margin-bottom: 4px; }
+  .pay-card .val { font-size: 22px; font-weight: 700; }
+  .accent-card { border-left: 3px solid var(--primary); }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Summary cards -->
+<div class="pay-summary">
+  <div class="pay-card accent-card">
+    <div class="lbl">Invoice Total</div>
+    <div class="val">₹{{ "{:,.2f}".format(invoice.grand_total or 0) }}</div>
+  </div>
+  <div class="pay-card">
+    <div class="lbl">Amount Paid</div>
+    <div class="val text-success">₹{{ "{:,.2f}".format(paid) }}</div>
+  </div>
+  <div class="pay-card">
+    <div class="lbl">Pending</div>
+    <div class="val {% if pending > 0 %}text-danger{% else %}text-success{% endif %}">
+      ₹{{ "{:,.2f}".format(pending if pending > 0 else 0) }}
+    </div>
+  </div>
+  <div class="pay-card">
+    <div class="lbl">Customer</div>
+    <div style="font-size:15px;font-weight:600;margin-top:4px;">{{ cust_name }}</div>
+  </div>
+</div>
+
+<div style="display:grid; grid-template-columns: 1fr 340px; gap:20px; align-items:start;">
+
+  <!-- Payment history -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">Payment History</span></div>
+    <table class="tbl">
+      <thead><tr>
+        <th>Date</th><th>Amount (₹)</th><th>Method</th><th>Reference</th><th>Notes</th><th></th>
+      </tr></thead>
+      <tbody>
+        {% for p in payments %}
+        <tr>
+          <td>{{ p.payment_date }}</td>
+          <td><strong class="text-success">₹{{ "{:,.2f}".format(p.amount) }}</strong></td>
+          <td>{{ p.method or '—' }}</td>
+          <td class="text-muted font-mono">{{ p.reference or '—' }}</td>
+          <td class="text-muted">{{ p.notes or '—' }}</td>
+          <td>
+            <form method="POST" action="{{ url_for('payments.delete', invoice_id=invoice.id, payment_id=p.id) }}" onsubmit="return confirm('Delete this payment?')">
+              <button class="btn btn-danger btn-sm" type="submit">Del</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="text-muted" style="text-align:center;padding:24px;">No payments recorded yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Record payment -->
+  <div class="card">
+    <div class="card-header"><span class="card-title">Record Payment</span></div>
+    <div class="card-body">
+      <form method="POST" action="{{ url_for('payments.add', invoice_id=invoice.id) }}">
+        <div class="form-group">
+          <label>Amount (₹) *</label>
+          <input type="number" name="amount" step="0.01" min="0.01"
+                 placeholder="{% if pending > 0 %}{{ '{:.2f}'.format(pending) }}{% else %}0.00{% endif %}"
+                 value="{{ '{:.2f}'.format(pending) if pending > 0 else '' }}" required>
+        </div>
+        <div class="form-group">
+          <label>Payment Date</label>
+          <input type="date" name="payment_date" value="{{ today }}">
+        </div>
+        <div class="form-group">
+          <label>Method</label>
+          <select name="method">
+            <option>Cash</option>
+            <option>Bank Transfer</option>
+            <option>UPI</option>
+            <option>Cheque</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Reference / Txn ID</label>
+          <input type="text" name="reference" placeholder="Optional">
+        </div>
+        <div class="form-group">
+          <label>Notes</label>
+          <input type="text" name="notes" placeholder="Optional">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;">Record Payment</button>
+      </form>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

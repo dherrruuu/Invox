@@ -17,12 +17,13 @@ class InvoiceItem(Base):
     size: Mapped[str] = mapped_column(String(100), default="")
     unit: Mapped[str] = mapped_column(String(50), default="")
     length: Mapped[float] = mapped_column(Float, default=0.0)
-    width: Mapped[float] = mapped_column(Float, default=0.0)
+    width: Mapped[float] = mapped_column(Float, default=0.0)   # used as "Nos"
     height: Mapped[float] = mapped_column(Float, default=0.0)
-    quantity: Mapped[float] = mapped_column(Float, default=0.0)
+    quantity: Mapped[float] = mapped_column(Float, default=0.0)  # = length * height * nos
     rate: Mapped[float] = mapped_column(Float, default=0.0)
     amount: Mapped[float] = mapped_column(Float, default=0.0)
-    gst_percentage: Mapped[float] = mapped_column(Float, default=18.0)
+    gst_percentage: Mapped[float] = mapped_column(Float, default=0.0)
+    remarks: Mapped[str] = mapped_column(Text, default="")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     invoice = relationship("Invoice", back_populates="line_items")
