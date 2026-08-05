@@ -1,22 +1,49 @@
-from __future__ import annotations
+from typing import Any, Dict, List
 
-from typing import Generic, TypeVar
-
-from sqlalchemy.orm import Session
-
-ModelType = TypeVar("ModelType")
+from invox.db.manager import db
 
 
-class BaseRepository(Generic[ModelType]):
-    def __init__(self, db_session: Session):
-        self.db_session = db_session
+class BaseRepository:
 
-    def add(self, entity: ModelType) -> ModelType:
-        self.db_session.add(entity)
-        self.db_session.commit()
-        self.db_session.refresh(entity)
-        return entity
+    table_name = None
 
-    def clear_all(self, model) -> None:
-        self.db_session.query(model).delete()
-        self.db_session.commit()
+
+    def __init__(self, table_name=None):
+        if table_name:
+            self.table_name = table_name
+
+        if not self.table_name:
+            raise ValueError("table_name is required")
+
+
+    def get_all(self) -> List[Dict[str, Any]]:
+        return db.select_all(self.table_name)
+
+
+    def get_by_id(self, record_id: int):
+        return db.select_by_id(
+            self.table_name,
+            record_id
+        )
+
+
+    def create(self, data: Dict[str, Any]):
+        return db.insert(
+            self.table_name,
+            data
+        )
+
+
+    def update(self, record_id: int, data: Dict[str, Any]):
+        return db.update(
+            self.table_name,
+            record_id,
+            data
+        )
+
+
+    def delete(self, record_id: int):
+        return db.delete(
+            self.table_name,
+            record_id
+        )

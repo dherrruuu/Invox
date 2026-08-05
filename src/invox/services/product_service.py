@@ -1,69 +1,101 @@
-from __future__ import annotations
+from typing import Dict, Any, List
 
-from sqlalchemy.orm import Session
-
-from ..db.connection import get_session
-from ..models.product import Product
-from ..repositories.product_repository import ProductRepository
-from ..utils.validators import validate_product_data
+from invox.repositories.product_repository import ProductRepository
 
 
 class ProductService:
-    def __init__(self, db_session: Session | None = None):
-        self.db_session = db_session or get_session()
-        self.product_repository = ProductRepository(self.db_session)
 
-    def add_product(self, product_or_name, category=None, rate=None, unit="Nos", gst_percentage=18.0):
-        product = product_or_name if isinstance(product_or_name, Product) else Product(
-            name=product_or_name,
-            category=category or "",
-            rate=rate or 0.0,
-            unit=unit,
-            gst_percentage=gst_percentage,
+    def __init__(self):
+        self.product_repository = ProductRepository()
+
+
+    # Get all products
+    def get_products(self) -> List[Dict[str, Any]]:
+        return self.product_repository.get_all()
+
+
+    # Get product by ID
+    def get_product(self, product_id: int):
+
+        return self.product_repository.get_by_id(
+            product_id
         )
-        if not validate_product_data(product):
-            raise ValueError("Invalid product details")
-        return self.product_repository.add_product(product)
 
-    def edit_product(self, product_or_id, name=None, category=None, rate=None, unit="Nos", gst_percentage=18.0):
-        if isinstance(product_or_id, Product):
-            product = product_or_id
-        else:
-            existing = self.product_repository.get_product(product_or_id)
-            if existing is None:
-                raise ValueError("Invalid product ID")
-            product = existing
-            if name is not None:
-                product.name = name
-            if category is not None:
-                product.category = category
-            if rate is not None:
-                product.rate = rate
-            product.unit = unit
-            product.gst_percentage = gst_percentage
-        if not validate_product_data(product):
-            raise ValueError("Invalid product details")
-        return self.product_repository.edit_product(product)
 
-    def delete_product(self, product_id):
-        if not self.product_repository.delete_product(product_id):
-            raise ValueError("Invalid product ID")
-        return True
+    # Search products
+    def search_product(self, keyword: str):
 
-    def get_product(self, product_id):
-        product = self.product_repository.get_product(product_id)
-        if product is None:
-            raise ValueError("Invalid product ID")
-        return product
+        if not keyword:
+            return []
 
-    def list_products(self):
-        return self.product_repository.get_all_products()
+        return self.product_repository.search(
+            keyword
+        )
 
-    def get_all_products(self):
-        return self.list_products()
 
-    def search_products(self, query: str):
-        return self.product_repository.search(query)
+    # Add product
+    def add_product(
+        self,
+        name: str,
+        code: str,
+        price: float,
+        stock: int = 0
+    ):
 
-    def get_product_by_id(self, product_id):
-        return self.get_product(product_id)
+        if not name:
+            raise ValueError(
+                "Product name is required"
+            )
+
+        if not code:
+            raise ValueError(
+                "Product code is required"
+            )
+
+        if price < 0:
+            raise ValueError(
+                "Price cannot be negative"
+            )
+
+
+        existing = self.product_repository.get_by_code(
+            code
+        )
+
+
+        if existing:
+            raise ValueError(
+                "Product with this code already exists"
+            )
+
+
+        return self.product_repository.create_product(
+            name=name,
+            code=code,
+            price=price,
+            stock=stock
+        )
+
+
+    # Update product
+    def update_product(
+        self,
+        product_id: int,
+        data: Dict[str, Any]
+    ):
+
+        return self.product_repository.update_product(
+            product_id,
+            data
+        )
+
+
+    # Delete product
+    def delete_product(
+        self,
+        product_id: int
+    ):
+
+        return self.product_repository.delete_product(
+            product_id
+        )

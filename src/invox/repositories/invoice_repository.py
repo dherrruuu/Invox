@@ -1,62 +1,129 @@
-from __future__ import annotations
+from typing import Dict, Any, List
 
-from sqlalchemy.orm import Session, joinedload
+from invox.repositories.base_repository import BaseRepository
+from invox.repositories.customer_repository import CustomerRepository
+from invox.db.manager import db
 
-from ..models.invoice import Invoice
-from .base_repository import BaseRepository
 
+class InvoiceRepository(BaseRepository):
 
-class InvoiceRepository(BaseRepository[Invoice]):
-    def __init__(self, db_session: Session):
-        super().__init__(db_session)
+    def __init__(self):
+        super().__init__("invoices")
+        self.customer_repository = CustomerRepository()
 
-    def add_invoice(self, invoice: Invoice) -> Invoice:
-        return self.add(invoice)
+    # -------------------------------------------------
+    # Create complete invoice
+    # -------------------------------------------------
 
-    def get_invoice(self, invoice_id: int) -> Invoice | None:
-        return (
-            self.db_session.query(Invoice)
-            .options(joinedload(Invoice.line_items), joinedload(Invoice.customer))
-            .filter(Invoice.id == invoice_id)
-            .first()
-        )
+    def create_invoice(
+        self,
+        invoice_data: Dict[str, Any],
+        items: List[Dict[str, Any]]
+    ):
 
-    def get_by_number(self, invoice_number: int) -> Invoice | None:
-        return (
-            self.db_session.query(Invoice)
-            .options(joinedload(Invoice.line_items), joinedload(Invoice.customer))
-            .filter(Invoice.invoice_number == invoice_number)
-            .first()
-        )
+        invoice_response = self.create(invoice_data)
 
-    def update_invoice(self, invoice: Invoice) -> Invoice | None:
-        existing_invoice = self.get_invoice(invoice.id)
-        if existing_invoice is None:
+        if not invoice_response:
             return None
-        existing_invoice.invoice_date = invoice.invoice_date
-        existing_invoice.customer_id = invoice.customer_id
-        existing_invoice.subtotal = invoice.subtotal
-        existing_invoice.gst_amount = invoice.gst_amount
-        existing_invoice.discount_amount = invoice.discount_amount
-        existing_invoice.grand_total = invoice.grand_total
-        existing_invoice.notes = invoice.notes
-        existing_invoice.status = invoice.status
-        self.db_session.commit()
-        self.db_session.refresh(existing_invoice)
-        return existing_invoice
 
-    def delete_invoice(self, invoice_id: int) -> bool:
-        invoice = self.get_invoice(invoice_id)
-        if invoice is None:
-            return False
-        self.db_session.delete(invoice)
-        self.db_session.commit()
-        return True
+        invoice_id = invoice_response[0]["id"]
 
-    def get_all_invoices(self) -> list[Invoice]:
-        return list(
-            self.db_session.query(Invoice)
-            .options(joinedload(Invoice.line_items), joinedload(Invoice.customer))
-            .order_by(Invoice.id.desc())
-            .all()
+        for item in items:
+            item["invoice_id"] = invoice_id
+            db.insert(
+                "invoice_items",
+                item
+            )
+
+        return self.get_invoice_details(invoice_id)
+
+    # -------------------------------------------------
+    # Get complete invoice
+    # -------------------------------------------------
+
+    def get_invoice_details(
+        self,
+        invoice_id: int
+    ):
+
+        invoice = self.get_by_id(invoice_id)
+
+        if not invoice:
+            return None
+
+        # ---------------------------------------
+        # Customer Details
+        # ---------------------------------------
+
+        customer = {}
+
+        customer_id = invoice.get("customer_id")
+
+        if customer_id:
+
+            customer = (
+                self.customer_repository.get_by_id(
+                    customer_id
+                )
+                or {}
+            )
+
+        invoice["customer_name"] = customer.get(
+            "name",
+            ""
+        )
+
+        invoice["customer_phone"] = customer.get(
+            "phone",
+            ""
+        )
+
+        invoice["customer_address"] = customer.get(
+            "address",
+            ""
+        )
+
+        # ---------------------------------------
+        # Invoice Items
+        # ---------------------------------------
+
+        items = db.find(
+            "invoice_items",
+            "invoice_id",
+            invoice_id
+        )
+
+        invoice["items"] = items
+
+        return invoice
+
+    # -------------------------------------------------
+    # Get invoices by customer
+    # -------------------------------------------------
+
+    def get_customer_invoices(
+        self,
+        customer_id: int
+    ):
+
+        return db.find(
+            "invoices",
+            "customer_id",
+            customer_id
+        )
+
+    # -------------------------------------------------
+    # Delete invoice
+    # -------------------------------------------------
+
+    def delete_invoice(
+        self,
+        invoice_id: int
+    ):
+
+        # invoice_items will be deleted automatically
+        # because of CASCADE
+
+        return self.delete(
+            invoice_id
         )

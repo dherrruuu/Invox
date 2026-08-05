@@ -1,75 +1,73 @@
-from __future__ import annotations
+from typing import Dict, Any, List
 
-from datetime import date, datetime
-
-from sqlalchemy.orm import Session
-
-from ..constants import DEFAULT_TAX_RATE
-from ..db.connection import get_session
-from ..models.customer import Customer
-from ..models.invoice import Invoice
-from ..models.invoice_item import InvoiceItem
-from ..repositories.invoice_repository import InvoiceRepository
+from invox.repositories.invoice_repository import InvoiceRepository
+from invox.utils.calculator import (
+    convert_feet_inches,
+    calculate_qty,
+    calculate_amount,
+    calculate_totals,
+)
 
 
 class InvoiceService:
-    def __init__(self, db_session: Session | None = None):
-        self.db_session = db_session or get_session()
-        self.invoice_repository = InvoiceRepository(self.db_session)
 
-    def _next_invoice_number(self) -> int:
-        latest = self.db_session.query(Invoice).order_by(Invoice.invoice_number.desc()).first()
-        return 1 if latest is None else int(latest.invoice_number) + 1
+    def __init__(self):
+        self.invoice_repository = InvoiceRepository()
 
-    def create_invoice(self, customer_or_invoice, items=None, total_amount=None, invoice_number=None, date_value=None):
-        if isinstance(customer_or_invoice, Invoice):
-            invoice = customer_or_invoice
-        else:
-            customer_id = customer_or_invoice.customer_id if isinstance(customer_or_invoice, Customer) else int(customer_or_invoice)
-            invoice = Invoice(
-                invoice_number=invoice_number or self._next_invoice_number(),
-                customer_id=customer_id,
-                date=date_value or date.today(),
-                total_amount=total_amount or 0,
+    # ------------------------------------
+    # Create complete invoice
+    # ------------------------------------
+
+    def create_invoice(
+        self, 
+        invoice_data: Dict[str, Any], 
+        items: List[Dict[str, Any]]
+    ) -> Any:
+        processed_items: List[Dict[str, Any]] = []
+
+        # Process every invoice row
+        for index, item in enumerate(items, start=1):
+            length_value = convert_feet_inches(item.get("length_input"))
+            height_value = convert_feet_inches(item.get("height_input"))
+            nos = item.get("nos", 1)
+            rate = item.get("rate", 0)
+
+            qty = calculate_qty(
+                item.get("unit"),
+                length_value,
+                height_value,
+                nos,
             )
-            for item in items or []:
-                invoice.add_item(item)
-        invoice.refresh_totals()
-        return self.invoice_repository.add_invoice(invoice)
 
-    def calculate_total(self, invoice_or_items):
-        if isinstance(invoice_or_items, Invoice):
-            invoice_or_items.refresh_totals()
-            return invoice_or_items.subtotal
-        subtotal = 0.0
-        for item in invoice_or_items:
-            quantity = float(item.get("quantity", 0))
-            rate = float(item.get("rate", 0))
-            amount = quantity * rate
-            subtotal += amount
-        return subtotal
+            amount = calculate_amount(qty, rate)
 
-    def generate_invoice_pdf(self, invoice):
-        from .pdf_service import PDFService
+            processed_items.append({
+                "sl_no": index,
+                "description": item.get("description"),
+                "unit": item.get("unit"),
+                "length_input": item.get("length_input"),
+                "height_input": item.get("height_input"),
+                "length_value": length_value,
+                "height_value": height_value,
+                "nos": nos,
+                "qty": qty,
+                "rate": rate,
+                "amount": amount,
+                "remarks": item.get("remarks"),
+            })
 
-        pdf_service = PDFService()
-        invoice_data = invoice.generate_invoice() if isinstance(invoice, Invoice) else invoice
-        return pdf_service.generate_invoice_pdf(invoice_data)
+        # Calculate invoice totals
+        gst_percentage = invoice_data.get("gst_percentage", 18)
+        totals = calculate_totals(processed_items, gst_percentage)
+        invoice_data.update(totals)
 
-    def get_invoice(self, invoice_id):
-        return self.invoice_repository.get_invoice(invoice_id)
+        # Advance payment and balance calculation
+        advance = invoice_data.get("advance_payment", 0)
+        balance = invoice_data.get("grand_total", 0) - advance
+        invoice_data["balance_amount"] = round(balance, 2)
 
-    def update_invoice(self, invoice_id, updated_data):
-        invoice = self.invoice_repository.get_invoice(invoice_id)
-        if invoice is None:
-            return None
-        for key, value in updated_data.items():
-            setattr(invoice, key, value)
-        invoice.refresh_totals()
-        return self.invoice_repository.update_invoice(invoice)
-
-    def delete_invoice(self, invoice_id):
-        return self.invoice_repository.delete_invoice(invoice_id)
-
-    def list_invoices(self):
-        return self.invoice_repository.get_all_invoices()
+        # Save everything
+        return self.invoice_repository.create_invoice(
+            invoice_data, 
+            processed_items
+        )
