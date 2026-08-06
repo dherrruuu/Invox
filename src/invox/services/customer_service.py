@@ -1,4 +1,6 @@
-from typing import Dict, Any, List
+"""
+Customer Service
+"""
 
 from invox.repositories.customer_repository import CustomerRepository
 
@@ -6,75 +8,95 @@ from invox.repositories.customer_repository import CustomerRepository
 class CustomerService:
 
     def __init__(self):
+
         self.customer_repository = CustomerRepository()
 
+    # --------------------------------
+    # Create Customer
+    # --------------------------------
 
-    # Get all customers
-    def get_customers(self) -> List[Dict[str, Any]]:
-        return self.customer_repository.get_all()
-
-
-    # Get customer by ID
-    def get_customer(self, customer_id: int):
-        return self.customer_repository.get_by_id(customer_id)
-
-
-    # Search customers
-    def search_customer(self, keyword: str):
-
-        if not keyword:
-            return []
-
-        return self.customer_repository.search(keyword)
-
-
-    # Add new customer
-    def add_customer(
+    def create_customer(
         self,
         name: str,
         phone: str,
-        address: str = None
+        address: str = "",
     ):
-
-        if not name:
-            raise ValueError("Customer name is required")
-
-        if not phone:
-            raise ValueError("Customer phone is required")
-
-
-        existing = self.customer_repository.get_by_phone(phone)
-
-        if existing:
-            raise ValueError(
-                "Customer with this phone already exists"
-            )
-
 
         return self.customer_repository.create_customer(
             name=name,
             phone=phone,
-            address=address
+            address=address,
         )
 
+    # --------------------------------
+    # Get Customer
+    # --------------------------------
 
-    # Update customer
+    def get_customer(
+        self,
+        customer_id: int,
+    ):
+
+        return self.customer_repository.get_by_id(
+            customer_id
+        )
+
+    # --------------------------------
+    # Get All Customers
+    # --------------------------------
+
+    def get_all_customers(self):
+
+        return self.customer_repository.get_all()
+
+    # --------------------------------
+    # Search
+    # --------------------------------
+
+    def search_customers(
+        self,
+        keyword: str,
+    ):
+
+        return self.customer_repository.search(
+            keyword
+        )
+
+    # --------------------------------
+    # Phone Search
+    # --------------------------------
+
+    def get_customer_by_phone(
+        self,
+        phone: str,
+    ):
+
+        return self.customer_repository.get_by_phone(
+            phone
+        )
+
+    # --------------------------------
+    # Update
+    # --------------------------------
+
     def update_customer(
         self,
         customer_id: int,
-        data: Dict[str, Any]
+        data: dict,
     ):
 
         return self.customer_repository.update_customer(
             customer_id,
-            data
+            data,
         )
 
+    # --------------------------------
+    # Delete
+    # --------------------------------
 
-    # Delete customer
     def delete_customer(
         self,
-        customer_id: int
+        customer_id: int,
     ):
 
         return self.customer_repository.delete_customer(

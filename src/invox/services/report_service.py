@@ -1,45 +1,151 @@
-from __future__ import annotations
+"""
+Report Service
+"""
 
-from datetime import date, datetime
-
-from sqlalchemy.orm import Session
-
-from ..db.connection import get_session
-from ..models.customer import Customer
-from ..models.invoice import Invoice
-from ..models.quotation import Quotation
-from ..repositories.customer_repository import CustomerRepository
-from ..repositories.invoice_repository import InvoiceRepository
-from ..repositories.quotation_repository import QuotationRepository
+from invox.repositories.invoice_repository import InvoiceRepository
+from invox.repositories.customer_repository import CustomerRepository
+from invox.repositories.product_repository import ProductRepository
+from invox.repositories.quotation_repository import QuotationRepository
 
 
 class ReportService:
-    def __init__(self, db_session: Session | None = None):
-        self.db_session = db_session or get_session()
-        self.invoice_repo = InvoiceRepository(self.db_session)
-        self.quotation_repo = QuotationRepository(self.db_session)
-        self.customer_repo = CustomerRepository(self.db_session)
 
-    def _between(self, model, start_date: date | datetime, end_date: date | datetime, column_name: str):
-        column = getattr(model, column_name)
-        return list(
-            self.db_session.query(model)
-            .filter(column >= start_date, column <= end_date)
-            .order_by(column.asc())
-            .all()
-        )
+    def __init__(self):
 
-    def generate_sales_report(self, start_date: datetime, end_date: datetime):
-        invoices = self._between(Invoice, start_date, end_date, "invoice_date")
-        total_sales = sum(float(invoice.grand_total or 0) for invoice in invoices)
-        return {"total_sales": total_sales, "invoices": invoices}
+        self.invoice_repo = InvoiceRepository()
+        self.customer_repo = CustomerRepository()
+        self.product_repo = ProductRepository()
+        self.quotation_repo = QuotationRepository()
+
+    # -------------------------------------------------
+    # Sales Report
+    # -------------------------------------------------
+
+    def generate_sales_report(
+        self,
+        start_date=None,
+        end_date=None,
+    ):
+
+        invoices = self.invoice_repo.get_all()
+
+        filtered = []
+
+        total_sales = 0.0
+
+        for invoice in invoices:
+
+            invoice_date = invoice.get("date")
+
+            if start_date and invoice_date:
+
+                if str(invoice_date) < str(start_date):
+                    continue
+
+            if end_date and invoice_date:
+
+                if str(invoice_date) > str(end_date):
+                    continue
+
+            filtered.append(invoice)
+
+            total_sales += float(
+                invoice.get(
+                    "grand_total",
+                    0,
+                )
+            )
+
+        return {
+
+            "total_sales": total_sales,
+
+            "invoices": filtered,
+
+        }
+
+    # -------------------------------------------------
+    # Customer Report
+    # -------------------------------------------------
 
     def generate_customer_report(self):
-        customers = self.customer_repo.get_all_customers()
-        return {"total_customers": len(customers), "customers": customers}
 
-    def generate_quotation_report(self, start_date: datetime, end_date: datetime):
-        quotations = self._between(Quotation, start_date, end_date, "quotation_date")
-        total_quotations = len(quotations)
-        total_value = sum(float(quotation.grand_total or 0) for quotation in quotations)
-        return {"total_quotations": total_quotations, "total_value": total_value, "quotations": quotations}
+        customers = self.customer_repo.get_all()
+
+        return {
+
+            "total_customers": len(customers),
+
+            "customers": customers,
+
+        }
+
+    # -------------------------------------------------
+    # Product Report
+    # -------------------------------------------------
+
+    def generate_product_report(self):
+
+        products = self.product_repo.get_all()
+
+        return {
+
+            "total_products": len(products),
+
+            "products": products,
+
+        }
+
+    # -------------------------------------------------
+    # Quotation Report
+    # -------------------------------------------------
+
+    def generate_quotation_report(
+        self,
+        start_date=None,
+        end_date=None,
+    ):
+
+        quotations = self.quotation_repo.get_all()
+
+        filtered = []
+
+        total_value = 0.0
+
+        for quotation in quotations:
+
+            quotation_date = quotation.get("date")
+
+            if start_date and quotation_date:
+
+                if str(quotation_date) < str(start_date):
+                    continue
+
+            if end_date and quotation_date:
+
+                if str(quotation_date) > str(end_date):
+                    continue
+
+            filtered.append(quotation)
+
+            total_value += float(
+
+                quotation.get(
+
+                    "grand_total",
+
+                    0,
+
+                )
+
+            )
+
+        return {
+
+            "total_quotations": len(filtered),
+
+            "total_value": total_value,
+
+            "quotations": filtered,
+
+        }

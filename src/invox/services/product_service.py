@@ -1,4 +1,6 @@
-from typing import Dict, Any, List
+"""
+Product Service
+"""
 
 from invox.repositories.product_repository import ProductRepository
 
@@ -6,96 +8,96 @@ from invox.repositories.product_repository import ProductRepository
 class ProductService:
 
     def __init__(self):
+
         self.product_repository = ProductRepository()
 
+    # --------------------------------
+    # Create Product
+    # --------------------------------
 
-    # Get all products
-    def get_products(self) -> List[Dict[str, Any]]:
-        return self.product_repository.get_all()
+    def create_product(
+        self,
+        data: dict,
+    ):
 
+        return self.product_repository.create(
+            data
+        )
 
-    # Get product by ID
-    def get_product(self, product_id: int):
+    # --------------------------------
+    # Get Product
+    # --------------------------------
+
+    def get_product(
+        self,
+        product_id: int,
+    ):
 
         return self.product_repository.get_by_id(
             product_id
         )
 
+    # --------------------------------
+    # Get All Products
+    # --------------------------------
 
-    # Search products
-    def search_product(self, keyword: str):
+    def get_all_products(self):
 
-        if not keyword:
-            return []
+        return self.product_repository.get_all()
 
-        return self.product_repository.search(
-            keyword
-        )
+    # --------------------------------
+    # Search Products
+    # --------------------------------
 
-
-    # Add product
-    def add_product(
+    def search_products(
         self,
-        name: str,
-        code: str,
-        price: float,
-        stock: int = 0
+        keyword: str,
     ):
 
-        if not name:
-            raise ValueError(
-                "Product name is required"
-            )
+        products = self.product_repository.get_all()
 
-        if not code:
-            raise ValueError(
-                "Product code is required"
-            )
+        keyword = keyword.lower()
 
-        if price < 0:
-            raise ValueError(
-                "Price cannot be negative"
-            )
+        return [
 
+            product
 
-        existing = self.product_repository.get_by_code(
-            code
-        )
+            for product in products
 
+            if keyword in str(
+                product.get("name", "")
+            ).lower()
 
-        if existing:
-            raise ValueError(
-                "Product with this code already exists"
-            )
+            or keyword in str(
+                product.get("description", "")
+            ).lower()
 
+        ]
 
-        return self.product_repository.create_product(
-            name=name,
-            code=code,
-            price=price,
-            stock=stock
-        )
+    # --------------------------------
+    # Update Product
+    # --------------------------------
 
-
-    # Update product
     def update_product(
         self,
         product_id: int,
-        data: Dict[str, Any]
+        data: dict,
     ):
 
-        return self.product_repository.update_product(
+        return self.product_repository.update(
             product_id,
-            data
+            data,
         )
 
+    # --------------------------------
+    # Delete Product
+    # --------------------------------
 
-    # Delete product
     def delete_product(
         self,
-        product_id: int
+        product_id: int,
     ):
 
-        return self.product_repository.delete_product(
+        return self.product_repository.delete(
             product_id
         )

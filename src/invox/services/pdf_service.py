@@ -4,9 +4,10 @@ PDF Service
 
 from pathlib import Path
 
+from num2words import num2words
+
 from invox.config import APP_CONFIG
 from invox.pdf.builder import InvoiceBuilder
-from invox.utils.amount_to_words import amount_to_words
 
 
 class PDFService:
@@ -36,7 +37,29 @@ class PDFService:
         )
 
     # -------------------------------------------------
-    # Invoice
+    # Convert Amount to Words
+    # -------------------------------------------------
+
+    def amount_to_words(
+        self,
+        amount,
+    ):
+
+        try:
+
+            words = num2words(
+                amount,
+                lang="en_IN",
+            )
+
+        except Exception:
+
+            words = num2words(amount)
+
+        return words.title() + " Only"
+
+    # -------------------------------------------------
+    # Invoice PDF
     # -------------------------------------------------
 
     def generate_invoice_pdf(
@@ -52,13 +75,6 @@ class PDFService:
         file_path = (
             self.invoice_dir
             / f"{invoice_code}.pdf"
-        )
-
-        grand_total = float(
-            invoice_data.get(
-                "grand_total",
-                0,
-            )
         )
 
         company = {
@@ -92,7 +108,6 @@ class PDFService:
                     "company_gstin",
                     "",
                 ),
-
         }
 
         customer = {
@@ -114,14 +129,14 @@ class PDFService:
                     "customer_phone",
                     "",
                 ),
-
-            "gstin":
-                invoice_data.get(
-                    "customer_gstin",
-                    "",
-                ),
-
         }
+
+        grand_total = float(
+            invoice_data.get(
+                "grand_total",
+                0,
+            )
+        )
 
         invoice = {
 
@@ -159,42 +174,34 @@ class PDFService:
                 ),
 
             "subtotal":
-                float(
-                    invoice_data.get(
-                        "subtotal",
-                        0,
-                    )
+                invoice_data.get(
+                    "subtotal",
+                    0,
                 ),
 
             "gst":
-                float(
-                    invoice_data.get(
-                        "gst_amount",
-                        0,
-                    )
+                invoice_data.get(
+                    "gst_amount",
+                    0,
                 ),
 
             "discount":
-                float(
-                    invoice_data.get(
-                        "discount_amount",
-                        0,
-                    )
+                invoice_data.get(
+                    "discount_amount",
+                    0,
                 ),
 
             "roundoff":
-                float(
-                    invoice_data.get(
-                        "roundoff",
-                        0,
-                    )
+                invoice_data.get(
+                    "roundoff",
+                    0,
                 ),
 
             "grand_total":
                 grand_total,
 
             "amount_in_words":
-                amount_to_words(
+                self.amount_to_words(
                     grand_total
                 ),
 
@@ -203,7 +210,6 @@ class PDFService:
                     "bank_details",
                     "",
                 ),
-
         }
 
         items = invoice_data.get(
@@ -222,7 +228,7 @@ class PDFService:
         )
 
     # -------------------------------------------------
-    # Quotation
+    # Quotation PDF
     # -------------------------------------------------
 
     def generate_quotation_pdf(
