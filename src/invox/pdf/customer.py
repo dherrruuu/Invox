@@ -2,79 +2,89 @@
 Customer / Invoice Details Section
 """
 
-from reportlab.platypus import Table
-from reportlab.platypus import TableStyle
-from reportlab.platypus import Paragraph
+from reportlab.platypus import Table, TableStyle, Paragraph
 from reportlab.lib import colors
 
 
 def build_customer_section(customer, invoice, styles):
 
-    left = [
+    from_section = [
 
-        Paragraph("<b>FROM / BILL TO</b>", styles["normal"]),
+        Paragraph("<b>FROM</b>", styles["normal"]),
+
+        Paragraph("<b>Balaji Wood Decor</b>", styles["normal"]),
+
+        Paragraph("17, Bangalore", styles["small"]),
+
+        Paragraph("GSTIN : XXXXXXXX", styles["small"]),
+
+    ]
+
+    bill_to = [
+
+        Paragraph("<b>BILL TO</b>", styles["normal"]),
 
         Paragraph(
-            f"<b>Name :</b> {customer.get('name','')}",
+            f"<b>{customer.get('name','')}</b>",
             styles["normal"]
         ),
 
         Paragraph(
-            f"<b>Address :</b> {customer.get('address','')}",
-            styles["normal"]
+            customer.get("address",""),
+            styles["small"]
         ),
 
         Paragraph(
-            f"<b>Phone :</b> {customer.get('phone','')}",
-            styles["normal"]
+            f"Phone : {customer.get('phone','')}",
+            styles["small"]
+        ),
+
+        Paragraph(
+            f"GSTIN : {customer.get('gstin','')}",
+            styles["small"]
         ),
 
     ]
 
-    right = [
+    invoice_details = [
+
+        Paragraph("<b>INVOICE DETAILS</b>", styles["normal"]),
 
         Paragraph(
             f"<b>Date :</b> {invoice.get('date','')}",
-            styles["normal"]
+            styles["small"]
         ),
 
         Paragraph(
             f"<b>Invoice No :</b> {invoice.get('invoice_no','')}",
-            styles["normal"]
-        ),
-
-        Paragraph(
-            f"<b>GSTIN :</b> {invoice.get('gstin','')}",
-            styles["normal"]
+            styles["small"]
         ),
 
         Paragraph(
             f"<b>Place :</b> {invoice.get('place','')}",
-            styles["normal"]
+            styles["small"]
         ),
 
         Paragraph(
             f"<b>Payment :</b> {invoice.get('payment','')}",
-            styles["normal"]
+            styles["small"]
         ),
 
     ]
 
     table = Table(
 
-        [
+        [[
 
-            [
+            from_section,
 
-                left,
+            bill_to,
 
-                right
+            invoice_details
 
-            ]
+        ]],
 
-        ],
-
-        colWidths=[270,270]
+        colWidths=[170, 170, 200]
 
     )
 
@@ -84,17 +94,21 @@ def build_customer_section(customer, invoice, styles):
 
             [
 
-                ("GRID",(0,0),(-1,-1),1,colors.black),
+                ("BOX", (0, 0), (-1, -1), 1.2, colors.black),
 
-                ("VALIGN",(0,0),(-1,-1),"TOP"),
+                ("LINEAFTER", (0, 0), (0, -1), 0.8, colors.black),
 
-                ("LEFTPADDING",(0,0),(-1,-1),8),
+                ("LINEAFTER", (1, 0), (1, -1), 0.8, colors.black),
 
-                ("RIGHTPADDING",(0,0),(-1,-1),8),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
 
-                ("TOPPADDING",(0,0),(-1,-1),8),
+                ("LEFTPADDING", (0, 0), (-1, -1), 8),
 
-                ("BOTTOMPADDING",(0,0),(-1,-1),8),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+
+                ("TOPPADDING", (0, 0), (-1, -1), 8),
+
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
 
             ]
 

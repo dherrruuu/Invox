@@ -1,13 +1,8 @@
 """
-Totals Section
+Professional Totals Section
 """
 
-from reportlab.platypus import (
-    Table,
-    TableStyle,
-    Paragraph,
-)
-
+from reportlab.platypus import Table, TableStyle, Paragraph
 from reportlab.lib import colors
 
 
@@ -29,182 +24,67 @@ def build_totals(invoice, styles):
         ""
     )
 
-    terms = invoice.get(
-        "terms",
-        ""
-    )
-
-    left = [
-
-        [
-            Paragraph(
-                "<b>Amount in Words</b>",
-                styles["normal"]
-            )
-        ],
-
-        [
-            Paragraph(
-                amount_words,
-                styles["normal"]
-            )
-        ],
-
-        [
-            Paragraph(
-                "<b>Bank Details</b>",
-                styles["normal"]
-            )
-        ],
-
-        [
-            Paragraph(
-                bank,
-                styles["normal"]
-            )
-        ],
-
-        [
-            Paragraph(
-                "<b>Terms & Conditions</b>",
-                styles["normal"]
-            )
-        ],
-
-        [
-            Paragraph(
-                terms,
-                styles["normal"]
-            )
-        ],
-
-    ]
-
-    left_table = Table(
-        left,
-        colWidths=[350],
-    )
-
-    left_table.setStyle(
-
-        TableStyle(
-
-            [
-
-                ("GRID", (0,0), (-1,-1), 0.6, colors.black),
-
-                ("LEFTPADDING",(0,0),(-1,-1),8),
-
-                ("RIGHTPADDING",(0,0),(-1,-1),8),
-
-                ("TOPPADDING",(0,0),(-1,-1),5),
-
-                ("BOTTOMPADDING",(0,0),(-1,-1),5),
-
-            ]
-
-        )
-
-    )
-
-    right = [
+    data = [
 
         [
 
-            Paragraph("<b>Sub Total</b>",styles["normal"]),
+            Paragraph("<b>Amount in Words</b>", styles["normal"]),
 
-            Paragraph(f"{subtotal:,.2f}",styles["table_right"])
+            Paragraph("<b>Sub Total</b>", styles["normal"]),
+
+            Paragraph(f"{subtotal:,.2f}", styles["table_right"]),
 
         ],
 
         [
 
-            Paragraph("<b>GST</b>",styles["normal"]),
+            Paragraph(amount_words, styles["small"]),
 
-            Paragraph(f"{gst:,.2f}",styles["table_right"])
+            Paragraph("<b>GST (18%)</b>", styles["normal"]),
 
-        ],
-
-        [
-
-            Paragraph("<b>Discount</b>",styles["normal"]),
-
-            Paragraph(f"{discount:,.2f}",styles["table_right"])
+            Paragraph(f"{gst:,.2f}", styles["table_right"]),
 
         ],
 
         [
 
-            Paragraph("<b>Round Off</b>",styles["normal"]),
+            Paragraph("<b>Bank Details</b>", styles["normal"]),
 
-            Paragraph(f"{roundoff:,.2f}",styles["table_right"])
+            Paragraph("<b>Discount</b>", styles["normal"]),
+
+            Paragraph(f"{discount:,.2f}", styles["table_right"]),
 
         ],
 
         [
 
-            Paragraph("<b>GRAND TOTAL</b>",styles["normal"]),
+            Paragraph(bank, styles["small"]),
 
-            Paragraph(
-                f"{grand_total:,.2f}",
-                styles["table_right"]
-            )
+            Paragraph("<b>Round Off</b>", styles["normal"]),
+
+            Paragraph(f"{roundoff:,.2f}", styles["table_right"]),
+
+        ],
+
+        [
+
+            Paragraph("", styles["normal"]),
+
+            Paragraph("<b>GRAND TOTAL</b>", styles["normal"]),
+
+            Paragraph(f"{grand_total:,.2f}", styles["table_right"]),
 
         ],
 
     ]
-
-    right_table = Table(
-
-        right,
-
-        colWidths=[90,100]
-
-    )
-
-    right_table.setStyle(
-
-        TableStyle(
-
-            [
-
-                ("GRID",(0,0),(-1,-1),0.7,colors.black),
-
-                ("BOX",(0,0),(-1,-1),1.2,colors.black),
-
-                ("BACKGROUND",(0,4),(-1,4),colors.HexColor("#EEEEEE")),
-
-                ("FONTNAME",(0,4),(-1,4),"Helvetica-Bold"),
-
-                ("LEFTPADDING",(0,0),(-1,-1),8),
-
-                ("RIGHTPADDING",(0,0),(-1,-1),8),
-
-                ("TOPPADDING",(0,0),(-1,-1),6),
-
-                ("BOTTOMPADDING",(0,0),(-1,-1),6),
-
-            ]
-
-        )
-
-    )
 
     table = Table(
 
-        [
+        data,
 
-            [
+        colWidths=[350, 90, 100],
 
-                left_table,
-
-                right_table
-
-            ]
-
-        ],
-
-        colWidths=[350,190]
+        rowHeights=[24, 34, 24, 34, 28],
 
     )
 
@@ -214,11 +94,61 @@ def build_totals(invoice, styles):
 
             [
 
-                ("VALIGN",(0,0),(-1,-1),"TOP"),
+                # --------------------------
+                # Outer Border
+                # --------------------------
 
-                ("LEFTPADDING",(0,0),(-1,-1),0),
+                ("BOX", (0, 0), (-1, -1), 1.2, colors.black),
 
-                ("RIGHTPADDING",(0,0),(-1,-1),0),
+                # --------------------------
+                # Vertical Lines
+                # --------------------------
+
+                ("LINEAFTER", (0, 0), (0, -1), 0.8, colors.black),
+
+                ("LINEAFTER", (1, 0), (1, -1), 0.6, colors.black),
+
+                # --------------------------
+                # Right Section Grid
+                # --------------------------
+
+                ("LINEBELOW", (1, 0), (2, 0), 0.6, colors.black),
+
+                ("LINEBELOW", (1, 1), (2, 1), 0.6, colors.black),
+
+                ("LINEBELOW", (1, 2), (2, 2), 0.6, colors.black),
+
+                ("LINEBELOW", (1, 3), (2, 3), 0.6, colors.black),
+
+                # --------------------------
+                # Grand Total
+                # --------------------------
+
+                ("BACKGROUND", (1, 4), (2, 4), colors.HexColor("#F2F2F2")),
+
+                ("FONTNAME", (1, 4), (2, 4), "Helvetica-Bold"),
+
+                ("FONTSIZE", (1, 4), (2, 4), 10),
+
+                # --------------------------
+                # Alignment
+                # --------------------------
+
+                ("ALIGN", (2, 0), (2, -1), "RIGHT"),
+
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+
+                # --------------------------
+                # Padding
+                # --------------------------
+
+                ("LEFTPADDING", (0, 0), (-1, -1), 8),
+
+                ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+
+                ("TOPPADDING", (0, 0), (-1, -1), 5),
+
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
 
             ]
 

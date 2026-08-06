@@ -2,49 +2,27 @@
 Invoice Header
 """
 
-from reportlab.platypus import Table
-from reportlab.platypus import TableStyle
-from reportlab.platypus import Paragraph
+from reportlab.platypus import (
+    Table,
+    TableStyle,
+    Paragraph,
+)
 from reportlab.lib import colors
 
 
 def build_header(company, styles):
+    """
+    Professional Invoice Header
+    """
 
     company_name = company.get(
         "company_name",
-        "BALAJI WOOD DECOR"
+        "BALAJI WOOD DECOR",
     )
 
     company_tagline = company.get(
         "company_tagline",
-        "Interior | Furniture | Turnkey Works"
-    )
-
-    company_address = company.get(
-        "company_address",
-        ""
-    )
-
-    company_phone = company.get(
-        "company_phone",
-        ""
-    )
-
-    company_gstin = company.get(
-        "company_gstin",
-        ""
-    )
-
-    address_line = " | ".join(
-        [
-            value
-            for value in [
-                company_address,
-                company_phone,
-                f"GSTIN : {company_gstin}" if company_gstin else ""
-            ]
-            if value
-        ]
+        "Interior | Furniture | Turnkey Works",
     )
 
     data = [
@@ -52,54 +30,67 @@ def build_header(company, styles):
         [
             Paragraph(
                 "Shri Ganeshay Namah",
-                styles["center_small"]
+                styles["center_small"],
             )
         ],
 
         [
             Paragraph(
                 f"<b>{company_name}</b>",
-                styles["company"]
+                styles["company"],
             )
         ],
 
         [
             Paragraph(
                 company_tagline,
-                styles["center_normal"]
-            )
-        ],
-
-        [
-            Paragraph(
-                address_line,
-                styles["center_small"]
+                styles["center_normal"],
             )
         ],
 
     ]
 
     table = Table(
+
         data,
+
         colWidths=[540],
+
+        rowHeights=[
+            28,
+            48,
+            30,
+        ],
+
     )
 
     table.setStyle(
+
         TableStyle(
+
             [
 
-                ("GRID", (0, 0), (-1, -1), 1, colors.black),
+                # Outer Border
+                ("BOX", (0, 0), (-1, -1), 1.2, colors.black),
 
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+                # Horizontal Lines
+                ("LINEBELOW", (0, 0), (-1, 0), 1, colors.black),
+                ("LINEBELOW", (0, 1), (-1, 1), 1, colors.black),
 
-                ("TOPPADDING", (0, 0), (-1, -1), 5),
-
+                # Alignment
                 ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-
                 ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
 
+                # Padding
+                ("TOPPADDING", (0, 0), (-1, -1), 4),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+                ("LEFTPADDING", (0, 0), (-1, -1), 6),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+
             ]
+
         )
+
     )
 
     return table

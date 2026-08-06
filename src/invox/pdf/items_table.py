@@ -4,162 +4,185 @@ Professional Items Table
 
 from reportlab.platypus import Table, TableStyle, Paragraph
 from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import mm
 
 
 def build_items_table(items, styles):
+    """
+    Professional invoice items table.
+    Fits inside page margins automatically.
+    """
+
+    # Printable width
+    page_width = A4[0]
+    usable_width = page_width - (24 * mm)   # 12mm left + 12mm right margins
+
+    # -------------------------------------------------------
+# Fixed column widths (points)
+# Total = 540
+# -------------------------------------------------------
+
+    col_widths = [
+
+        22,     # SL
+
+        145,    # DESCRIPTION
+
+        40,     # UNIT
+
+        45,     # LENGTH
+
+        45,     # HEIGHT
+
+        32,     # NOS
+
+        40,     # QTY
+
+        55,     # RATE
+
+        65,     # AMOUNT
+
+        51,     # REMARKS
+
+    ]
+
+    # -------------------------------
+    # Header
+    # -------------------------------
 
     headers = [
 
         Paragraph("<b>SL</b>", styles["table_header"]),
+
         Paragraph("<b>DESCRIPTION</b>", styles["table_header"]),
+
         Paragraph("<b>UNIT</b>", styles["table_header"]),
+
         Paragraph("<b>LENGTH</b>", styles["table_header"]),
+
         Paragraph("<b>HEIGHT</b>", styles["table_header"]),
-        Paragraph("<b>NO'S</b>", styles["table_header"]),
+
+        Paragraph("<b>NOS</b>", styles["table_header"]),
+
         Paragraph("<b>QTY</b>", styles["table_header"]),
+
         Paragraph("<b>RATE</b>", styles["table_header"]),
+
         Paragraph("<b>AMOUNT</b>", styles["table_header"]),
-        Paragraph("<b>RMK</b>", styles["table_header"]),
+
+        Paragraph("<b>REMARKS</b>", styles["table_header"]),
 
     ]
 
+    data = [headers]
 
-    table_data = [headers]
+    # -------------------------------
+    # Rows
+    # -------------------------------
 
+    for index, item in enumerate(items, start=1):
 
-    # -------------------------
-    # Item Rows
-    # -------------------------
-
-    for i, item in enumerate(items, start=1):
-
-        row = [
-
-            Paragraph(
-                str(i),
-                styles["table_cell"]
-            ),
-
-            Paragraph(
-                item.get("description", ""),
-                styles["table_cell"]
-            ),
-
-            Paragraph(
-                item.get("unit", ""),
-                styles["table_cell"]
-            ),
-
-            Paragraph(
-                str(item.get("length", "")),
-                styles["table_cell"]
-            ),
-
-            Paragraph(
-                str(item.get("height", "")),
-                styles["table_cell"]
-            ),
-
-            Paragraph(
-                str(item.get("nos", "")),
-                styles["table_cell"]
-            ),
-
-            Paragraph(
-                str(item.get("quantity", "")),
-                styles["table_cell"]
-            ),
-
-            Paragraph(
-                f"{float(item.get('rate',0)):,.2f}",
-                styles["table_right"]
-            ),
-
-            Paragraph(
-                f"{float(item.get('amount',0)):,.2f}",
-                styles["table_right"]
-            ),
-
-            Paragraph(
-                item.get("remarks", ""),
-                styles["table_cell"]
-            ),
-
-        ]
-
-        table_data.append(row)
-
-
-
-    # -------------------------
-    # Empty Rows
-    # -------------------------
-
-    minimum_rows = 15
-
-
-    while len(table_data) < minimum_rows + 1:
-
-        table_data.append(
+        data.append(
 
             [
 
-                Paragraph(
-                    "",
-                    styles["table_cell"]
-                )
+                Paragraph(str(index), styles["table_right"]),
 
-                for _ in range(10)
+                Paragraph(
+                    str(item.get("description", "")),
+                    styles["table_cell"],
+                ),
+
+                Paragraph(
+                    str(item.get("unit", "")),
+                    styles["table_cell"],
+                ),
+
+                Paragraph(
+                    str(item.get("length", "")),
+                    styles["table_right"],
+                ),
+
+                Paragraph(
+                    str(item.get("height", "")),
+                    styles["table_right"],
+                ),
+
+                Paragraph(
+                    str(item.get("nos", "")),
+                    styles["table_right"],
+                ),
+
+                Paragraph(
+                    str(item.get("quantity", "")),
+                    styles["table_right"],
+                ),
+
+                Paragraph(
+                    f'{float(item.get("rate", 0)):,.2f}',
+                    styles["table_right"],
+                ),
+
+                Paragraph(
+                    f'{float(item.get("amount", 0)):,.2f}',
+                    styles["table_right"],
+                ),
+
+                Paragraph(
+                    str(item.get("remarks", "")),
+                    styles["table_cell"],
+                ),
 
             ]
 
         )
 
+    # ---------------------------------
+    # Keep table height even if few rows
+    # ---------------------------------
 
+    minimum_rows = 18
 
-    # -------------------------
-    # Table
-    # -------------------------
+    while len(data) < minimum_rows:
+
+        data.append(
+
+            [
+
+                Paragraph("", styles["table_cell"]),
+
+                Paragraph("", styles["table_cell"]),
+
+                Paragraph("", styles["table_cell"]),
+
+                Paragraph("", styles["table_cell"]),
+
+                Paragraph("", styles["table_cell"]),
+
+                Paragraph("", styles["table_cell"]),
+
+                Paragraph("", styles["table_cell"]),
+
+                Paragraph("", styles["table_cell"]),
+
+                Paragraph("", styles["table_cell"]),
+
+                Paragraph("", styles["table_cell"]),
+
+            ]
+
+        )
 
     table = Table(
 
-        table_data,
+        data,
+
+        colWidths=col_widths,
 
         repeatRows=1,
 
-        colWidths=[
-
-            22,     # SL
-
-            115,    # DESCRIPTION
-
-            35,     # UNIT
-
-            42,     # LENGTH
-
-            42,     # HEIGHT
-
-            35,     # NOS
-
-            35,     # QTY
-
-            55,     # RATE
-
-            65,     # AMOUNT
-
-            55,     # RMK
-
-        ],
-
-        hAlign="CENTER"
-
     )
-
-
-
-    # -------------------------
-    # Styling
-    # -------------------------
 
     table.setStyle(
 
@@ -167,134 +190,45 @@ def build_items_table(items, styles):
 
             [
 
-                # Border
-
-                (
-                    "GRID",
-                    (0,0),
-                    (-1,-1),
-                    0.5,
-                    colors.black
-                ),
-
-                (
-                    "BOX",
-                    (0,0),
-                    (-1,-1),
-                    1,
-                    colors.black
-                ),
-
-
-
                 # Header
+                ("BACKGROUND", (0, 0), (-1, 0), colors.white),
 
-                (
-                    "BACKGROUND",
-                    (0,0),
-                    (-1,0),
-                    colors.white
-                ),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
 
-                (
-                    "FONTNAME",
-                    (0,0),
-                    (-1,0),
-                    "Helvetica-Bold"
-                ),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
 
-                (
-                    "ALIGN",
-                    (0,0),
-                    (-1,0),
-                    "CENTER"
-                ),
+                ("ALIGN", (0, 0), (-1, 0), "CENTER"),
 
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
 
+                # Outer border
+                ("BOX", (0, 0), (-1, -1), 1.3, colors.black),
 
-                # Body Alignment
+                # Grid
+                ("GRID", (0, 0), (-1, -1), 0.6, colors.black),
 
-                (
-                    "ALIGN",
-                    (0,1),
-                    (0,-1),
-                    "CENTER"
-                ),
+                # Row height
+                ("TOPPADDING", (0, 0), (-1, -1), 5),
 
-                (
-                    "ALIGN",
-                    (2,1),
-                    (6,-1),
-                    "CENTER"
-                ),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
 
-                (
-                    "ALIGN",
-                    (7,1),
-                    (8,-1),
-                    "RIGHT"
-                ),
+                ("LEFTPADDING", (0, 0), (-1, -1), 4),
 
+                ("RIGHTPADDING", (0, 0), (-1, -1), 4),
 
+                # Description left
+                ("ALIGN", (1, 1), (1, -1), "LEFT"),
 
-                # Vertical Center
+                # Numeric columns
+                ("ALIGN", (3, 1), (8, -1), "RIGHT"),
 
-                (
-                    "VALIGN",
-                    (0,0),
-                    (-1,-1),
-                    "MIDDLE"
-                ),
-
-
-
-                # Fixed row height
-
-                (
-                    "MINROWHEIGHT",
-                    (0,1),
-                    (-1,-1),
-                    22
-                ),
-
-
-
-                # Cell padding
-
-                (
-                    "LEFTPADDING",
-                    (0,0),
-                    (-1,-1),
-                    4
-                ),
-
-                (
-                    "RIGHTPADDING",
-                    (0,0),
-                    (-1,-1),
-                    4
-                ),
-
-                (
-                    "TOPPADDING",
-                    (0,0),
-                    (-1,-1),
-                    4
-                ),
-
-                (
-                    "BOTTOMPADDING",
-                    (0,0),
-                    (-1,-1),
-                    4
-                ),
-
+                # Remarks
+                ("ALIGN", (9, 1), (9, -1), "LEFT"),
 
             ]
 
         )
 
     )
-
 
     return table

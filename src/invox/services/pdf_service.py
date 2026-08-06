@@ -6,6 +6,7 @@ from pathlib import Path
 
 from invox.config import APP_CONFIG
 from invox.pdf.builder import InvoiceBuilder
+from invox.utils.amount_to_words import amount_to_words
 
 
 class PDFService:
@@ -45,12 +46,19 @@ class PDFService:
 
         invoice_code = (
             invoice_data.get("invoice_code")
-            or f"INV-{invoice_data.get('invoice_number','0001')}"
+            or f"INV-{invoice_data.get('invoice_number', '0001')}"
         )
 
         file_path = (
             self.invoice_dir
             / f"{invoice_code}.pdf"
+        )
+
+        grand_total = float(
+            invoice_data.get(
+                "grand_total",
+                0,
+            )
         )
 
         company = {
@@ -107,6 +115,12 @@ class PDFService:
                     "",
                 ),
 
+            "gstin":
+                invoice_data.get(
+                    "customer_gstin",
+                    "",
+                ),
+
         }
 
         invoice = {
@@ -145,50 +159,48 @@ class PDFService:
                 ),
 
             "subtotal":
-                invoice_data.get(
-                    "subtotal",
-                    0,
+                float(
+                    invoice_data.get(
+                        "subtotal",
+                        0,
+                    )
                 ),
 
             "gst":
-                invoice_data.get(
-                    "gst_amount",
-                    0,
+                float(
+                    invoice_data.get(
+                        "gst_amount",
+                        0,
+                    )
                 ),
 
             "discount":
-                invoice_data.get(
-                    "discount_amount",
-                    0,
+                float(
+                    invoice_data.get(
+                        "discount_amount",
+                        0,
+                    )
                 ),
 
             "roundoff":
-                invoice_data.get(
-                    "roundoff",
-                    0,
+                float(
+                    invoice_data.get(
+                        "roundoff",
+                        0,
+                    )
                 ),
 
             "grand_total":
-                invoice_data.get(
-                    "grand_total",
-                    0,
-                ),
+                grand_total,
 
             "amount_in_words":
-                invoice_data.get(
-                    "amount_in_words",
-                    "",
+                amount_to_words(
+                    grand_total
                 ),
 
             "bank_details":
                 invoice_data.get(
                     "bank_details",
-                    "",
-                ),
-
-            "terms":
-                invoice_data.get(
-                    "terms_and_conditions",
                     "",
                 ),
 
@@ -217,8 +229,6 @@ class PDFService:
         self,
         quotation_data: dict,
     ):
-
-        # We'll implement this after Invoice is finalized.
 
         raise NotImplementedError(
             "Quotation PDF is under development."
